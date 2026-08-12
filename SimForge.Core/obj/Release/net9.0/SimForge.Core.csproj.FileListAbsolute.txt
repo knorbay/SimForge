@@ -1,0 +1,11 @@
+/Users/ahmet/RiderProjects/SimForge/SimForge.Core/bin/Release/net9.0/SimForge.Core.deps.json
+/Users/ahmet/RiderProjects/SimForge/SimForge.Core/bin/Release/net9.0/SimForge.Core.dll
+/Users/ahmet/RiderProjects/SimForge/SimForge.Core/bin/Release/net9.0/SimForge.Core.pdb
+/Users/ahmet/RiderProjects/SimForge/SimForge.Core/obj/Release/net9.0/SimForge.Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/ahmet/RiderProjects/SimForge/SimForge.Core/obj/Release/net9.0/SimForge.Core.AssemblyInfoInputs.cache
+/Users/ahmet/RiderProjects/SimForge/SimForge.Core/obj/Release/net9.0/SimForge.Core.AssemblyInfo.cs
+/Users/ahmet/RiderProjects/SimForge/SimForge.Core/obj/Release/net9.0/SimForge.Core.csproj.CoreCompileInputs.cache
+/Users/ahmet/RiderProjects/SimForge/SimForge.Core/obj/Release/net9.0/SimForge.Core.dll
+/Users/ahmet/RiderProjects/SimForge/SimForge.Core/obj/Release/net9.0/refint/SimForge.Core.dll
+/Users/ahmet/RiderProjects/SimForge/SimForge.Core/obj/Release/net9.0/SimForge.Core.pdb
+/Users/ahmet/RiderProjects/SimForge/SimForge.Core/obj/Release/net9.0/ref/SimForge.Core.dll

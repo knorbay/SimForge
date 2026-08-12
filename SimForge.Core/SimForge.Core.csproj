@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Update="Node.cs">
+        <DependentUpon>Graph</DependentUpon>
+      </Compile>
+      <Compile Update="Connection.cs">
+        <DependentUpon>Graph</DependentUpon>
+      </Compile>
+      <Compile Update="Graph.cs">
+        <DependentUpon>Graph</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+</Project>

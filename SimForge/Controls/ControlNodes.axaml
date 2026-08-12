@@ -1,0 +1,15 @@
+<UserControl
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="SimForge.Controls.NodeControl">
+
+    <Border Width="120"
+            Height="60"
+            Background="Gray">
+        <TextBlock
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Text="Node"/>
+    </Border>
+
+</UserControl>

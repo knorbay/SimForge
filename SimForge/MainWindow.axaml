@@ -1,0 +1,559 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="SimForge.MainWindow"
+        Title="SimForge"
+        Width="1340"
+        Height="820"
+        MinWidth="1024"
+        MinHeight="680"
+        Background="#10151F">
+
+    <Window.Styles>
+        <Style Selector="Button.palette">
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="Background" Value="#202B3B" />
+            <Setter Property="BorderBrush" Value="#35445A" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style Selector="Expander.category">
+            <Setter Property="Background" Value="#172230" />
+            <Setter Property="BorderBrush" Value="#2B3C52" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="Padding" Value="4" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="52,*,28">
+
+        <!-- TOP BAR -->
+        <Border Grid.Row="0"
+                Background="#172131"
+                BorderBrush="#2B3B50"
+                BorderThickness="0,0,0,1">
+
+            <Grid ColumnDefinitions="220,*,Auto"
+                  Margin="14,0">
+
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Spacing="8">
+
+                    <Border Width="26"
+                            Height="26"
+                            CornerRadius="6"
+                            Background="#4C8DFF">
+
+                        <TextBlock Text="S"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontWeight="Bold" />
+                    </Border>
+
+                    <TextBlock Text="SimForge"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="8">
+
+                    <Button Name="RunButton"
+                            Click="RunButton_Click"
+                            Background="#237B54"
+                            Content="▶  Run Simulation" />
+
+                    <Button Name="StopButton"
+                            Click="StopButton_Click"
+                            IsEnabled="False"
+                            Content="■  Stop" />
+
+                    <Button Content="↶  Reset"
+                            Click="ResetButton_Click" />
+
+                    <Button Name="ConnectButton"
+                            Click="ConnectButton_Click"
+                            Content="⌁  Connect" />
+
+                    <Button Name="RemoveButton"
+                            Click="RemoveButton_Click"
+                            IsEnabled="False"
+                            Content="⌫  Delete Selected" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Spacing="12">
+
+                    <Border Name="ShortCircuitBadge"
+                            Background="#902626"
+                            CornerRadius="4"
+                            Padding="8,4"
+                            IsVisible="False">
+
+                        <TextBlock Text="⚠️ SHORT CIRCUIT DETECTED!"
+                                   Foreground="#FFCCCC"
+                                   FontWeight="Bold"
+                                   FontSize="11"
+                                   VerticalAlignment="Center" />
+                    </Border>
+
+                    <Border Background="#1F2C3F"
+                            CornerRadius="4"
+                            Padding="8,4">
+
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="6">
+
+                            <Ellipse Name="LedLight"
+                                     Width="10"
+                                     Height="10"
+                                     Fill="#472C2C"
+                                     VerticalAlignment="Center" />
+
+                            <TextBlock Name="ArduinoStatus"
+                                       VerticalAlignment="Center"
+                                       Foreground="#86D8A9"
+                                       FontSize="12"
+                                       Text="Status: Ready" />
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Name="StatusText"
+                               VerticalAlignment="Center"
+                               Foreground="#9DB1CA"
+                               Text="Ready" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- MAIN CONTENT -->
+        <Grid Grid.Row="1"
+              ColumnDefinitions="240,*,270">
+
+            <!-- COMPONENT LIBRARY -->
+            <Border Background="#151E2B"
+                    BorderBrush="#2B3B50"
+                    BorderThickness="0,0,1,0"
+                    Padding="10">
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+
+                    <StackPanel>
+
+                        <TextBlock Text="COMPONENT LIBRARY"
+                                   Foreground="#8FA4BE"
+                                   FontSize="11"
+                                   FontWeight="Bold"
+                                   Margin="4,4,0,10" />
+
+                        <!-- MICROCONTROLLERS -->
+                        <Expander Classes="category"
+                                  Header="Microcontrollers"
+                                  IsExpanded="True">
+
+                            <StackPanel>
+
+                                <Button Classes="palette"
+                                        Content="▣  Arduino Uno"
+                                        Click="PaletteButton_Click"
+                                        Tag="Arduino Uno" />
+
+                                <Button Classes="palette"
+                                        Content="▣  Arduino Nano"
+                                        Click="PaletteButton_Click"
+                                        Tag="Arduino Nano" />
+
+                                <Button Classes="palette"
+                                        Content="▣  ESP32 DevKit"
+                                        Click="PaletteButton_Click"
+                                        Tag="ESP32 DevKit" />
+
+                                <Button Classes="palette"
+                                        Content="▣  Raspberry Pi Pico"
+                                        Click="PaletteButton_Click"
+                                        Tag="Raspberry Pi Pico" />
+
+                                <Button Classes="palette"
+                                        Content="▣  STM32 Blue Pill"
+                                        Click="PaletteButton_Click"
+                                        Tag="STM32 Blue Pill" />
+
+                                <Button Classes="palette"
+                                        Content="▣  ATtiny85"
+                                        Click="PaletteButton_Click"
+                                        Tag="ATtiny85" />
+
+                            </StackPanel>
+                        </Expander>
+
+                        <!-- BASIC ELECTRONICS -->
+                        <Expander Classes="category"
+                                  Header="Basic Electronics"
+                                  IsExpanded="True">
+
+                            <StackPanel>
+
+                                <Button Classes="palette"
+                                        Content="◉  LED (Diode)"
+                                        Click="PaletteButton_Click"
+                                        Tag="LED" />
+
+                                <Button Classes="palette"
+                                        Content="/\/  Resistor (220 Ω)"
+                                        Click="PaletteButton_Click"
+                                        Tag="Direnç" />
+
+                                <Button Classes="palette"
+                                        Content="┫┣  Capacitor"
+                                        Click="PaletteButton_Click"
+                                        Tag="Kondansatör" />
+
+                                <Button Classes="palette"
+                                        Content="⊥  GND (Ground)"
+                                        Click="PaletteButton_Click"
+                                        Tag="GND" />
+
+                            </StackPanel>
+                        </Expander>
+
+                        <!-- SWITCHES -->
+                        <Expander Classes="category"
+                                  Header="Switches"
+                                  IsExpanded="True">
+
+                            <StackPanel>
+
+                                <Button Classes="palette"
+                                        Content="⏻  Push Button"
+                                        Click="PaletteButton_Click"
+                                        Tag="Buton" />
+
+                                <Button Classes="palette"
+                                        Content="⏼  Toggle Switch"
+                                        Click="PaletteButton_Click"
+                                        Tag="Geçiş Şalteri" />
+
+                                <Button Classes="palette"
+                                        Content="⇆  Slide Switch"
+                                        Click="PaletteButton_Click"
+                                        Tag="Sürgülü Anahtar" />
+
+                            </StackPanel>
+                        </Expander>
+                        
+                        <Expander Classes="category"
+                                  Header="Sensors &amp; Inputs"
+                                  IsExpanded="True">
+
+                            <StackPanel>
+
+                                <Button Classes="palette"
+                                        Content="☼  LDR Light Sensor"
+                                        Click="PaletteButton_Click"
+                                        Tag="LDR Sensör" />
+
+                                <Button Classes="palette"
+                                        Content="🎚  Potentiometer"
+                                        Click="PaletteButton_Click"
+                                        Tag="Potansiyometre" />
+
+                                <Button Classes="palette"
+                                        Content="∿  HC-SR04 Distance Sensor"
+                                        Click="PaletteButton_Click"
+                                        Tag="HC-SR04 Mesafe" />
+
+                                <Button Classes="palette"
+                                        Content="🌡  DHT11 Temperature Sensor"
+                                        Click="PaletteButton_Click"
+                                        Tag="DHT11 Sıcaklık" />
+
+                            </StackPanel>
+                        </Expander>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <Grid Grid.Column="1"
+                  RowDefinitions="*,180">
+
+                <Border Grid.Row="0"
+                        Background="#101722"
+                        Padding="12">
+
+                    <Grid>
+
+                        <Canvas Name="GraphCanvas"
+                                Background="#121C29"
+                                PointerPressed="GraphCanvas_PointerPressed" />
+
+                        <Border HorizontalAlignment="Left"
+                                VerticalAlignment="Bottom"
+                                Margin="12"
+                                Padding="10,6"
+                                CornerRadius="5"
+                                Background="#1C2838"
+                                Opacity="0.95">
+
+                            <TextBlock Text="Circuit Hint: Drag components and use 'Connect' to create connections."
+                                       Foreground="#AFC1D6"
+                                       FontSize="11" />
+                        </Border>
+
+                    </Grid>
+                </Border>
+                <Border Grid.Row="1"
+                        Background="#0D131D"
+                        BorderBrush="#2B3B50"
+                        BorderThickness="0,1,0,0">
+
+                    <Grid RowDefinitions="32,*">
+
+                        <Border Grid.Row="0"
+                                Background="#151F2C"
+                                Padding="10,0">
+
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+
+                                <StackPanel Orientation="Horizontal"
+                                            VerticalAlignment="Center"
+                                            Spacing="6">
+
+                                    <TextBlock Text="⌨"
+                                               Foreground="#7EC699"
+                                               VerticalAlignment="Center" />
+
+                                    <TextBlock Text="C++ / C ARDUINO SKETCH"
+                                               Foreground="#B0C4DE"
+                                               FontSize="11"
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <TextBlock Grid.Column="2"
+                                           Text="Arduino IDE Compatible"
+                                           Foreground="#6C7F93"
+                                           FontSize="11"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <TextBox Name="CodeEditorTextBox"
+                                 Grid.Row="1"
+                                 Background="#0A0F17"
+                                 Foreground="#85E89D"
+                                 FontFamily="Consolas,Monospace,Courier New"
+                                 FontSize="12"
+                                 BorderThickness="0"
+                                 AcceptsReturn="True"
+                                 TextWrapping="NoWrap"
+                                 Padding="10" />
+                    </Grid>
+                </Border>
+
+            </Grid>
+
+            <Border Grid.Column="2"
+                    Background="#151E2B"
+                    BorderBrush="#2B3B50"
+                    BorderThickness="1,0,0,0"
+                    Padding="14">
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+
+                    <StackPanel>
+
+                        <TextBlock Text="INSPECTOR"
+                                   Foreground="#8FA4BE"
+                                   FontSize="11"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,12" />
+
+                        <TextBlock Name="SelectedElementTitle"
+                                   Text="Circuit Workspace"
+                                   FontWeight="SemiBold"
+                                   FontSize="15" />
+
+                        <TextBlock Name="SelectedElementDescription"
+                                   Text="Welcome to the SimForge simulation environment. Add components from the library to begin building your circuit."
+                                   TextWrapping="Wrap"
+                                   Foreground="#AFC1D6"
+                                   Margin="0,6,0,0"
+                                   FontSize="12" />
+
+                        <Expander Header="Tutorial"
+                                  IsExpanded="True"
+                                  Margin="0,14,0,0">
+
+                            <TextBlock Name="TutorialText"
+                                       Text="Build your circuit by adding components and connecting their pins."
+                                       TextWrapping="Wrap"
+                                       Foreground="#A0B6D0"
+                                       FontSize="12"
+                                       Margin="2,6,0,0" />
+                        </Expander>
+
+                        <Expander Header="Information"
+                                  IsExpanded="True"
+                                  Margin="0,6,0,0">
+
+                            <TextBlock Name="GeneralInfoText"
+                                       Text="Workspace ready."
+                                       TextWrapping="Wrap"
+                                       Foreground="#AFC1D6"
+                                       FontSize="12"
+                                       Margin="2,6,0,0" />
+                        </Expander>
+
+                        <Expander Header="Pins &amp; Connections"
+                                  Margin="0,6,0,0">
+
+                            <TextBlock Name="PinsText"
+                                       Text="—"
+                                       TextWrapping="Wrap"
+                                       Foreground="#AFC1D6"
+                                       FontSize="12"
+                                       Margin="2,6,0,0" />
+                        </Expander>
+
+                        <Expander Header="Parameters &amp; Settings"
+                                  IsExpanded="True"
+                                  Margin="0,6,0,0">
+
+                            <StackPanel Margin="2,6,0,0"
+                                        Spacing="8">
+
+                                <TextBlock Name="ParametersText"
+                                           Text="Circuit Analyzer"
+                                           TextWrapping="Wrap"
+                                           Foreground="#AFC1D6"
+                                           FontSize="12" />
+
+                                <StackPanel Name="LedColorPanel"
+                                            Orientation="Horizontal"
+                                            Spacing="6"
+                                            IsVisible="False">
+
+                                    <TextBlock Text="LED Color:"
+                                               Foreground="#AFC1D6"
+                                               FontSize="12"
+                                               VerticalAlignment="Center" />
+
+                                    <ComboBox Name="LedColorComboBox"
+                                              SelectionChanged="LedColorComboBox_SelectionChanged"
+                                              Width="110"
+                                              Height="28"
+                                              FontSize="12">
+
+                                        <ComboBoxItem Content="Red"
+                                                      IsSelected="True" />
+
+                                        <ComboBoxItem Content="Green" />
+
+                                        <ComboBoxItem Content="Blue" />
+
+                                        <ComboBoxItem Content="Yellow" />
+
+                                        <ComboBoxItem Content="White" />
+
+                                    </ComboBox>
+                                </StackPanel>
+
+                            </StackPanel>
+                        </Expander>
+
+                        <Separator Margin="0,14,0,12" />
+
+                        <TextBlock Text="SIMULATION STATUS"
+                                   Foreground="#8FA4BE"
+                                   FontSize="11"
+                                   FontWeight="Bold" />
+
+                        <Grid ColumnDefinitions="*,Auto"
+                              Margin="0,8,0,0">
+
+                            <TextBlock Text="Elapsed Time"
+                                       Foreground="#AFC1D6"
+                                       FontSize="12" />
+
+                            <TextBlock Name="TimeText"
+                                       Grid.Column="1"
+                                       Text="0.000 s"
+                                       FontSize="12" />
+                        </Grid>
+                        
+                        <Grid ColumnDefinitions="*,Auto"
+                              Margin="0,6,0,0">
+
+                            <TextBlock Text="Short Circuit"
+                                       Foreground="#AFC1D6"
+                                       FontSize="12" />
+
+                            <TextBlock Name="ShortCircuitStateText"
+                                       Grid.Column="1"
+                                       Foreground="#86D8A9"
+                                       Text="Not Detected"
+                                       FontSize="12" />
+                        </Grid>
+                        
+                        <Grid ColumnDefinitions="*,Auto"
+                              Margin="0,6,0,0">
+
+                            <TextBlock Text="Circuit Status"
+                                       Foreground="#AFC1D6"
+                                       FontSize="12" />
+
+                            <TextBlock Name="CircuitStateText"
+                                       Grid.Column="1"
+                                       Foreground="#86D8A9"
+                                       Text="Valid"
+                                       FontSize="12" />
+                        </Grid>
+
+                        <Separator Margin="0,14,0,12" />
+                        
+                        <TextBlock Text="CIRCUIT HINT"
+                                   Foreground="#8FA4BE"
+                                   FontSize="11"
+                                   FontWeight="Bold" />
+
+                        <TextBlock Name="HintText"
+                                   Text="Run the simulation to verify your circuit."
+                                   TextWrapping="Wrap"
+                                   Foreground="#AFC1D6"
+                                   FontSize="12"
+                                   Margin="0,6,0,0" />
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+        </Grid>
+        
+        <Border Grid.Row="2"
+                Background="#172131"
+                BorderBrush="#2B3B50"
+                BorderThickness="0,1,0,0"
+                Padding="14,0">
+
+            <TextBlock Name="FooterText"
+                       Text="SimForge 0.2"
+                       VerticalAlignment="Center"
+                       Foreground="#71839B"
+                       FontSize="12" />
+
+        </Border>
+
+    </Grid>
+</Window>
