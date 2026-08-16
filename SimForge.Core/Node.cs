@@ -28,7 +28,7 @@ public abstract class Node
 
     public NodePin GetPin(string name) =>
         _pins.FirstOrDefault(pin => string.Equals(pin.Name, name, StringComparison.Ordinal))
-        ?? throw new KeyNotFoundException($"'{Name}' düğümünde '{name}' pini bulunamadı.");
+        ?? throw new KeyNotFoundException($"Pin '{name}' was not found on node '{Name}'.");
 
     public bool TryGetParameter(string name, out double value) =>
         _parameters.TryGetValue(name, out value);
@@ -46,7 +46,7 @@ public abstract class Node
     public virtual IEnumerable<string> Validate()
     {
         if (string.IsNullOrWhiteSpace(Name))
-            yield return "Bir node adı boş olamaz.";
+            yield return "A node name cannot be empty.";
     }
 
     public NodePin AddTerminal(string name, PinDirection direction, PinSignalType signalType) =>
@@ -55,10 +55,10 @@ public abstract class Node
     protected NodePin AddPin(string name, PinDirection direction, PinSignalType signalType)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Pin adı boş olamaz.", nameof(name));
+            throw new ArgumentException("A pin name cannot be empty.", nameof(name));
 
         if (_pins.Any(pin => string.Equals(pin.Name, name, StringComparison.Ordinal)))
-            throw new InvalidOperationException($"'{Name}' düğümünde '{name}' adlı bir pin zaten var.");
+            throw new InvalidOperationException($"Node '{Name}' already contains a pin named '{name}'.");
 
         var pin = new NodePin(this, name, direction, signalType);
         _pins.Add(pin);
@@ -68,7 +68,7 @@ public abstract class Node
     protected void SetParameter(string name, double value)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Parametre adı boş olamaz.", nameof(name));
+            throw new ArgumentException("A parameter name cannot be empty.", nameof(name));
 
         _parameters[name] = value;
     }
@@ -78,7 +78,9 @@ public class MicrocontrollerNode : Node
 {
     public MicrocontrollerNode(string name) : base(name, NodeKind.Microcontroller)
     {
+        AddTerminal("D2", PinDirection.Input, PinSignalType.Digital);
         AddTerminal("D13", PinDirection.Output, PinSignalType.Digital);
+        AddTerminal("5V", PinDirection.Output, PinSignalType.Power);
         AddTerminal("GND", PinDirection.Passive, PinSignalType.Ground);
     }
 
@@ -91,8 +93,8 @@ public class SwitchNode : Node
 {
     public SwitchNode(string name) : base(name, NodeKind.Electronic)
     {
-        AddTerminal("A", PinDirection.Passive, PinSignalType.Analog);
-        AddTerminal("B", PinDirection.Passive, PinSignalType.Analog);
+        AddTerminal("A", PinDirection.Passive, PinSignalType.Electrical);
+        AddTerminal("B", PinDirection.Passive, PinSignalType.Electrical);
     }
 
     public override bool AllowsCurrentPass() => SwitchState;
@@ -142,8 +144,8 @@ public class LedNode : Node
 {
     public LedNode(string name) : base(name, NodeKind.Actuator)
     {
-        AddTerminal("Anot", PinDirection.Input, PinSignalType.Analog);
-        AddTerminal("Katot", PinDirection.Passive, PinSignalType.Ground);
+        AddTerminal("Anode", PinDirection.Input, PinSignalType.Digital);
+        AddTerminal("Cathode", PinDirection.Passive, PinSignalType.Ground);
     }
 
     public override void Step(SimulationContext context, double deltaTimeSeconds)
@@ -157,8 +159,8 @@ public class PassiveNode : Node
 
     public PassiveNode(string name) : base(name, NodeKind.Electronic)
     {
-        AddTerminal("A", PinDirection.Passive, PinSignalType.Analog);
-        AddTerminal("B", PinDirection.Passive, PinSignalType.Analog);
+        AddTerminal("A", PinDirection.Passive, PinSignalType.Electrical);
+        AddTerminal("B", PinDirection.Passive, PinSignalType.Electrical);
     }
 
     public override void Step(SimulationContext context, double deltaTimeSeconds)
@@ -189,6 +191,7 @@ public enum PinSignalType
     Analog,
     Power,
     Ground,
+    Electrical,
     Mechanical
 }
 

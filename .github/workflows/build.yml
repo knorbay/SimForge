@@ -1,0 +1,59 @@
+name: Build and package
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            os: windows-latest
+            rid: win-x64
+            artifact: SimForge-0.3-windows-x64
+          - name: Linux x64
+            os: ubuntu-latest
+            rid: linux-x64
+            artifact: SimForge-0.3-linux-x64
+          - name: macOS arm64
+            os: macos-14
+            rid: osx-arm64
+            artifact: SimForge-0.3-macos-arm64
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore solution
+        run: dotnet restore SimForge.sln -p:UsedAvaloniaProducts=
+
+      - name: Run tests
+        run: dotnet test SimForge.sln --configuration Release --no-restore -p:UsedAvaloniaProducts=
+
+      - name: Restore runtime packages
+        run: dotnet restore SimForge/SimForge.csproj --runtime "${{ matrix.rid }}" -p:UsedAvaloniaProducts=
+
+      - name: Publish self-contained application
+        run: dotnet publish SimForge/SimForge.csproj --configuration Release --runtime "${{ matrix.rid }}" --self-contained true --no-restore --output "artifacts/${{ matrix.artifact }}" -p:UsedAvaloniaProducts= -p:DebugType=None -p:DebugSymbols=false
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: artifacts/${{ matrix.artifact }}
+          if-no-files-found: error

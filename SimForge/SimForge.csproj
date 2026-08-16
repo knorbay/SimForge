@@ -4,6 +4,10 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>0.3.0</Version>
+    <AssemblyName>SimForge</AssemblyName>
+    <Product>SimForge Circuit Studio</Product>
+    <Description>Interactive circuit design and simulation studio.</Description>
   </PropertyGroup>
 
   <ItemGroup>

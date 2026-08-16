@@ -19,12 +19,12 @@ public class Graph
         ArgumentNullException.ThrowIfNull(to);
 
         if (!Nodes.Contains(from.Owner) || !Nodes.Contains(to.Owner))
-            throw new InvalidOperationException("Bağlanacak iki pin de Graph içinde bulunan bir Node'a ait olmalıdır.");
+            throw new InvalidOperationException("Both pins must belong to nodes in this graph.");
 
         if (Connections.Any(connection =>
                 (ReferenceEquals(connection.From, from) && ReferenceEquals(connection.To, to)) ||
                 (ReferenceEquals(connection.From, to) && ReferenceEquals(connection.To, from))))
-            throw new InvalidOperationException("Bu iki pin zaten bağlı.");
+            throw new InvalidOperationException("These two pins are already connected.");
 
         var connection = new Connection(from, to);
         Connections.Add(connection);

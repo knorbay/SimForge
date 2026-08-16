@@ -11,8 +11,21 @@ class Program
     {
         AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) =>
         {
-            var logPath = Path.Combine(AppContext.BaseDirectory, "simforge-crash.log");
-            File.WriteAllText(logPath, eventArgs.ExceptionObject.ToString());
+            try
+            {
+                var logDirectory = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "SimForge",
+                    "Logs");
+                Directory.CreateDirectory(logDirectory);
+                File.WriteAllText(
+                    Path.Combine(logDirectory, "simforge-crash.log"),
+                    eventArgs.ExceptionObject.ToString());
+            }
+            catch
+            {
+                // Crash logging must never hide the original failure.
+            }
         };
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
