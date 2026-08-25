@@ -2,558 +2,490 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="using:SimForge.Controls"
         mc:Ignorable="d"
         x:Class="SimForge.MainWindow"
-        Title="SimForge"
-        Width="1340"
-        Height="820"
-        MinWidth="1024"
-        MinHeight="680"
-        Background="#10151F">
+        Title="SimForge Circuit Studio"
+        Width="1480"
+        Height="920"
+        MinWidth="1180"
+        MinHeight="760"
+        Background="#070B12"
+        FontFamily="Inter">
 
     <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="FontFamily" Value="Inter" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.command">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="13,0" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Background" Value="#121B28" />
+            <Setter Property="BorderBrush" Value="#253448" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#D8E4F2" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.command:pointerover">
+            <Setter Property="Background" Value="#1A2738" />
+            <Setter Property="BorderBrush" Value="#3B526D" />
+        </Style>
+        <Style Selector="Button.command:disabled">
+            <Setter Property="Opacity" Value="0.42" />
+        </Style>
+        <Style Selector="Button.run">
+            <Setter Property="Background" Value="#13A36D" />
+            <Setter Property="BorderBrush" Value="#2BCC8E" />
+            <Setter Property="Foreground" Value="#F2FFF9" />
+        </Style>
+        <Style Selector="Button.run:pointerover">
+            <Setter Property="Background" Value="#18B97D" />
+            <Setter Property="BorderBrush" Value="#55E0AA" />
+        </Style>
+        <Style Selector="Button.danger:pointerover">
+            <Setter Property="Background" Value="#321C27" />
+            <Setter Property="BorderBrush" Value="#704052" />
+            <Setter Property="Foreground" Value="#FFB3C3" />
+        </Style>
         <Style Selector="Button.palette">
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="MinHeight" Value="58" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Padding" Value="8" />
             <Setter Property="Margin" Value="0,0,0,4" />
-            <Setter Property="Background" Value="#202B3B" />
-            <Setter Property="BorderBrush" Value="#35445A" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#D9E5F2" />
+        </Style>
+        <Style Selector="Button.palette:pointerover">
+            <Setter Property="Background" Value="#152131" />
+            <Setter Property="BorderBrush" Value="#2B4058" />
+        </Style>
+        <Style Selector="Button.mini">
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="9,0" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Background" Value="#131E2D" />
+            <Setter Property="BorderBrush" Value="#293A50" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#AFC2D8" />
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+        <Style Selector="Button.mini:pointerover">
+            <Setter Property="Background" Value="#1C2A3C" />
+            <Setter Property="Foreground" Value="#F2F7FC" />
+        </Style>
+        <Style Selector="TextBox.search">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Padding" Value="34,8,10,8" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Background" Value="#0C131E" />
+            <Setter Property="BorderBrush" Value="#243247" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#DCE7F4" />
             <Setter Property="FontSize" Value="12" />
         </Style>
-
-        <Style Selector="Expander.category">
-            <Setter Property="Background" Value="#172230" />
-            <Setter Property="BorderBrush" Value="#2B3C52" />
-            <Setter Property="Margin" Value="0,0,0,8" />
-            <Setter Property="Padding" Value="4" />
+        <Style Selector="TextBox.search:focus">
+            <Setter Property="BorderBrush" Value="#4E8FFF" />
+        </Style>
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="#0E1723" />
+            <Setter Property="BorderBrush" Value="#202F43" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="11" />
+            <Setter Property="Padding" Value="12" />
+        </Style>
+        <Style Selector="Border.circuitNode">
+            <Setter Property="Background" Value="#111B28" />
+            <Setter Property="BorderBrush" Value="#31445C" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="BoxShadow" Value="0 10 26 0 #55000000" />
+        </Style>
+        <Style Selector="Border.circuitNode:pointerover">
+            <Setter Property="Background" Value="#152232" />
+            <Setter Property="BorderBrush" Value="#4A6584" />
+        </Style>
+        <Style Selector="Border.circuitNode.selected">
+            <Setter Property="BorderBrush" Value="#5B9BFF" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BoxShadow" Value="0 0 0 3 #305B9BFF, 0 12 30 0 #66000000" />
+        </Style>
+        <Style Selector="Border.circuitNode:focus">
+            <Setter Property="BorderBrush" Value="#8CB9FF" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+        <Style Selector="Separator">
+            <Setter Property="Background" Value="#1D2B3D" />
         </Style>
     </Window.Styles>
 
-    <Grid RowDefinitions="52,*,28">
-
-        <!-- TOP BAR -->
-        <Border Grid.Row="0"
-                Background="#172131"
-                BorderBrush="#2B3B50"
-                BorderThickness="0,0,0,1">
-
-            <Grid ColumnDefinitions="220,*,Auto"
-                  Margin="14,0">
-
-                <StackPanel Orientation="Horizontal"
-                            VerticalAlignment="Center"
-                            Spacing="8">
-
-                    <Border Width="26"
-                            Height="26"
-                            CornerRadius="6"
-                            Background="#4C8DFF">
-
-                        <TextBlock Text="S"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   FontWeight="Bold" />
+    <Grid RowDefinitions="64,*,30">
+        <Border Grid.Row="0" Background="#0C121C" BorderBrush="#1E2B3D" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="286,*,Auto" Margin="18,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="11">
+                    <Border Width="38" Height="38" CornerRadius="11" Background="#132C45"
+                            BorderBrush="#2F6EA8" BorderThickness="1">
+                        <Canvas Width="26" Height="26" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Ellipse Canvas.Left="2" Canvas.Top="3" Width="7" Height="7" Fill="#5B9BFF" />
+                            <Ellipse Canvas.Left="17" Canvas.Top="16" Width="7" Height="7" Fill="#36D99A" />
+                            <Line StartPoint="8,7" EndPoint="18,19" Stroke="#A7CAFF" StrokeThickness="2" />
+                            <Line StartPoint="7,18" EndPoint="19,7" Stroke="#5B9BFF" StrokeThickness="2" />
+                            <Ellipse Canvas.Left="3" Canvas.Top="15" Width="7" Height="7" Stroke="#A7CAFF" StrokeThickness="2" />
+                            <Ellipse Canvas.Left="16" Canvas.Top="3" Width="7" Height="7" Stroke="#36D99A" StrokeThickness="2" />
+                        </Canvas>
                     </Border>
-
-                    <TextBlock Text="SimForge"
-                               FontSize="18"
-                               FontWeight="SemiBold"
-                               VerticalAlignment="Center" />
+                    <StackPanel VerticalAlignment="Center" Spacing="-1">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <TextBlock Text="SIMFORGE" FontSize="15" FontWeight="Bold" Foreground="#F2F7FD" />
+                            <Border Background="#1B3049" CornerRadius="5" Padding="5,1" VerticalAlignment="Center">
+                                <TextBlock Text="STUDIO" FontSize="8" FontWeight="Bold" Foreground="#75ACFF" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Circuit design &amp; simulation" FontSize="10" Foreground="#70859D" />
+                    </StackPanel>
                 </StackPanel>
 
-                <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Spacing="8">
-
-                    <Button Name="RunButton"
-                            Click="RunButton_Click"
-                            Background="#237B54"
-                            Content="▶  Run Simulation" />
-
-                    <Button Name="StopButton"
-                            Click="StopButton_Click"
-                            IsEnabled="False"
-                            Content="■  Stop" />
-
-                    <Button Content="↶  Reset"
-                            Click="ResetButton_Click" />
-
-                    <Button Name="ConnectButton"
-                            Click="ConnectButton_Click"
-                            Content="⌁  Connect" />
-
-                    <Button Name="RemoveButton"
-                            Click="RemoveButton_Click"
-                            IsEnabled="False"
-                            Content="⌫  Delete Selected" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center"
+                            VerticalAlignment="Center" Spacing="7">
+                    <Button Name="RunButton" Classes="command run" Click="RunButton_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <TextBlock Text="▶" FontSize="10" VerticalAlignment="Center" />
+                            <TextBlock Text="Run" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Name="StopButton" Classes="command" Click="StopButton_Click" IsEnabled="False" Content="Ⅱ  Pause" />
+                    <Button Classes="command" Click="ResetButton_Click" Content="↻  Reset" />
+                    <Border Width="1" Height="24" Background="#263448" Margin="4,0" />
+                    <Button Name="ConnectButton" Classes="command" Click="ConnectButton_Click" Content="⌁  Connect" />
+                    <Button Name="RemoveButton" Classes="command danger" Click="RemoveButton_Click" IsEnabled="False" Content="Delete" />
                 </StackPanel>
 
-                <StackPanel Grid.Column="2"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center"
-                            Spacing="12">
-
-                    <Border Name="ShortCircuitBadge"
-                            Background="#902626"
-                            CornerRadius="4"
-                            Padding="8,4"
-                            IsVisible="False">
-
-                        <TextBlock Text="⚠️ SHORT CIRCUIT DETECTED!"
-                                   Foreground="#FFCCCC"
-                                   FontWeight="Bold"
-                                   FontSize="11"
-                                   VerticalAlignment="Center" />
-                    </Border>
-
-                    <Border Background="#1F2C3F"
-                            CornerRadius="4"
-                            Padding="8,4">
-
-                        <StackPanel Orientation="Horizontal"
-                                    Spacing="6">
-
-                            <Ellipse Name="LedLight"
-                                     Width="10"
-                                     Height="10"
-                                     Fill="#472C2C"
-                                     VerticalAlignment="Center" />
-
-                            <TextBlock Name="ArduinoStatus"
-                                       VerticalAlignment="Center"
-                                       Foreground="#86D8A9"
-                                       FontSize="12"
-                                       Text="Status: Ready" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Spacing="9">
+                    <Border Name="ShortCircuitBadge" Background="#3A1822" BorderBrush="#8C3549"
+                            BorderThickness="1" CornerRadius="8" Padding="10,6" IsVisible="False">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse Width="7" Height="7" Fill="#FF607D" VerticalAlignment="Center" />
+                            <TextBlock Text="SHORT CIRCUIT" Foreground="#FF9FB2" FontWeight="Bold" FontSize="10" />
                         </StackPanel>
                     </Border>
-
-                    <TextBlock Name="StatusText"
-                               VerticalAlignment="Center"
-                               Foreground="#9DB1CA"
-                               Text="Ready" />
+                    <Border Background="#0F1D28" BorderBrush="#203A43" BorderThickness="1" CornerRadius="9" Padding="10,6">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <Ellipse Name="LedLight" Width="8" Height="8" Fill="#345E50" VerticalAlignment="Center" />
+                            <TextBlock Name="ArduinoStatus" Text="System ready" Foreground="#95B8AD" FontSize="11" />
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Name="StatusText" Text="Ready" Foreground="#879BB2" FontSize="11" MinWidth="62" />
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- MAIN CONTENT -->
-        <Grid Grid.Row="1"
-              ColumnDefinitions="240,*,270">
-
-            <!-- COMPONENT LIBRARY -->
-            <Border Background="#151E2B"
-                    BorderBrush="#2B3B50"
-                    BorderThickness="0,0,1,0"
-                    Padding="10">
-
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-
-                    <StackPanel>
-
-                        <TextBlock Text="COMPONENT LIBRARY"
-                                   Foreground="#8FA4BE"
-                                   FontSize="11"
-                                   FontWeight="Bold"
-                                   Margin="4,4,0,10" />
-
-                        <!-- MICROCONTROLLERS -->
-                        <Expander Classes="category"
-                                  Header="Microcontrollers"
-                                  IsExpanded="True">
-
-                            <StackPanel>
-
-                                <Button Classes="palette"
-                                        Content="▣  Arduino Uno"
-                                        Click="PaletteButton_Click"
-                                        Tag="Arduino Uno" />
-
-                                <Button Classes="palette"
-                                        Content="▣  Arduino Nano"
-                                        Click="PaletteButton_Click"
-                                        Tag="Arduino Nano" />
-
-                                <Button Classes="palette"
-                                        Content="▣  ESP32 DevKit"
-                                        Click="PaletteButton_Click"
-                                        Tag="ESP32 DevKit" />
-
-                                <Button Classes="palette"
-                                        Content="▣  Raspberry Pi Pico"
-                                        Click="PaletteButton_Click"
-                                        Tag="Raspberry Pi Pico" />
-
-                                <Button Classes="palette"
-                                        Content="▣  STM32 Blue Pill"
-                                        Click="PaletteButton_Click"
-                                        Tag="STM32 Blue Pill" />
-
-                                <Button Classes="palette"
-                                        Content="▣  ATtiny85"
-                                        Click="PaletteButton_Click"
-                                        Tag="ATtiny85" />
-
+        <Grid Grid.Row="1" ColumnDefinitions="276,*,318">
+            <Border Grid.Column="0" Background="#0A1019" BorderBrush="#1D2A3B" BorderThickness="0,0,1,0">
+                <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="13,14,13,10">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="3,0,3,11">
+                        <StackPanel>
+                            <TextBlock Text="Components" FontSize="16" FontWeight="SemiBold" Foreground="#EDF4FC" />
+                            <TextBlock Text="Add building blocks to the canvas" FontSize="10" Foreground="#71879F" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="#111D2A" CornerRadius="7" Padding="7,3" VerticalAlignment="Center">
+                            <TextBlock Name="LibraryCountText" Text="17" FontSize="10" Foreground="#82A9D2" />
+                        </Border>
+                    </Grid>
+                    <Grid Grid.Row="1" Margin="0,0,0,10">
+                        <TextBox Name="ComponentSearchBox" Classes="search" PlaceholderText="Search components" />
+                        <TextBlock Text="⌕" Foreground="#6F87A1" FontSize="17" Margin="11,0,0,0"
+                                   HorizontalAlignment="Left" VerticalAlignment="Center" IsHitTestVisible="False" />
+                    </Grid>
+                    <Border Grid.Row="2" Classes="card" Padding="11" Margin="0,0,0,10"
+                            Background="#101E2D" BorderBrush="#294563">
+                        <Grid ColumnDefinitions="38,*,Auto">
+                            <Border Width="34" Height="34" CornerRadius="9" Background="#173C3A" BorderBrush="#286E65" BorderThickness="1">
+                                <TextBlock Text="✦" FontSize="16" Foreground="#51E0B4" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="9,0,8,0" VerticalAlignment="Center">
+                                <TextBlock Text="Starter circuit" FontSize="11" FontWeight="SemiBold" Foreground="#E4F7F1" />
+                                <TextBlock Text="UNO · resistor · LED" FontSize="9" Foreground="#79A49A" Margin="0,2,0,0" />
                             </StackPanel>
-                        </Expander>
-
-                        <!-- BASIC ELECTRONICS -->
-                        <Expander Classes="category"
-                                  Header="Basic Electronics"
-                                  IsExpanded="True">
-
-                            <StackPanel>
-
-                                <Button Classes="palette"
-                                        Content="◉  LED (Diode)"
-                                        Click="PaletteButton_Click"
-                                        Tag="LED" />
-
-                                <Button Classes="palette"
-                                        Content="/\/  Resistor (220 Ω)"
-                                        Click="PaletteButton_Click"
-                                        Tag="Direnç" />
-
-                                <Button Classes="palette"
-                                        Content="┫┣  Capacitor"
-                                        Click="PaletteButton_Click"
-                                        Tag="Kondansatör" />
-
-                                <Button Classes="palette"
-                                        Content="⊥  GND (Ground)"
-                                        Click="PaletteButton_Click"
-                                        Tag="GND" />
-
+                            <Button Grid.Column="2" Classes="mini" Click="StarterCircuitButton_Click" Content="Build" />
+                        </Grid>
+                    </Border>
+                    <Grid Grid.Row="3">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Name="ComponentLibraryPanel" />
+                        </ScrollViewer>
+                        <Border Name="SearchEmptyState" IsVisible="False" VerticalAlignment="Top"
+                                Background="#0E1723" BorderBrush="#25354A" BorderThickness="1"
+                                CornerRadius="10" Padding="14" Margin="2,4">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="No components found" FontSize="11" FontWeight="SemiBold" Foreground="#D5E1EE" />
+                                <TextBlock Text="Try a broader search term." FontSize="10" Foreground="#6F849B" />
                             </StackPanel>
-                        </Expander>
-
-                        <!-- SWITCHES -->
-                        <Expander Classes="category"
-                                  Header="Switches"
-                                  IsExpanded="True">
-
-                            <StackPanel>
-
-                                <Button Classes="palette"
-                                        Content="⏻  Push Button"
-                                        Click="PaletteButton_Click"
-                                        Tag="Buton" />
-
-                                <Button Classes="palette"
-                                        Content="⏼  Toggle Switch"
-                                        Click="PaletteButton_Click"
-                                        Tag="Geçiş Şalteri" />
-
-                                <Button Classes="palette"
-                                        Content="⇆  Slide Switch"
-                                        Click="PaletteButton_Click"
-                                        Tag="Sürgülü Anahtar" />
-
-                            </StackPanel>
-                        </Expander>
-                        
-                        <Expander Classes="category"
-                                  Header="Sensors &amp; Inputs"
-                                  IsExpanded="True">
-
-                            <StackPanel>
-
-                                <Button Classes="palette"
-                                        Content="☼  LDR Light Sensor"
-                                        Click="PaletteButton_Click"
-                                        Tag="LDR Sensör" />
-
-                                <Button Classes="palette"
-                                        Content="🎚  Potentiometer"
-                                        Click="PaletteButton_Click"
-                                        Tag="Potansiyometre" />
-
-                                <Button Classes="palette"
-                                        Content="∿  HC-SR04 Distance Sensor"
-                                        Click="PaletteButton_Click"
-                                        Tag="HC-SR04 Mesafe" />
-
-                                <Button Classes="palette"
-                                        Content="🌡  DHT11 Temperature Sensor"
-                                        Click="PaletteButton_Click"
-                                        Tag="DHT11 Sıcaklık" />
-
-                            </StackPanel>
-                        </Expander>
-
-                    </StackPanel>
-                </ScrollViewer>
+                        </Border>
+                    </Grid>
+                </Grid>
             </Border>
 
-            <Grid Grid.Column="1"
-                  RowDefinitions="*,180">
-
-                <Border Grid.Row="0"
-                        Background="#101722"
-                        Padding="12">
-
-                    <Grid>
-
-                        <Canvas Name="GraphCanvas"
-                                Background="#121C29"
-                                PointerPressed="GraphCanvas_PointerPressed" />
-
-                        <Border HorizontalAlignment="Left"
-                                VerticalAlignment="Bottom"
-                                Margin="12"
-                                Padding="10,6"
-                                CornerRadius="5"
-                                Background="#1C2838"
-                                Opacity="0.95">
-
-                            <TextBlock Text="Circuit Hint: Drag components and use 'Connect' to create connections."
-                                       Foreground="#AFC1D6"
-                                       FontSize="11" />
-                        </Border>
-
+            <Grid Grid.Column="1" RowDefinitions="48,*,226" Background="#080D15">
+                <Border Grid.Row="0" Background="#0C131D" BorderBrush="#1D2A3B" BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto" Margin="15,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="9">
+                            <TextBlock Text="Design workspace" FontSize="12" FontWeight="SemiBold" Foreground="#DCE7F4" />
+                            <Border Background="#11263A" CornerRadius="6" Padding="7,3">
+                                <TextBlock Name="WorkspaceModeText" Text="SCHEMATIC" FontSize="8" FontWeight="Bold" Foreground="#68A8FF" />
+                            </Border>
+                            <TextBlock Text="Untitled circuit" FontSize="10" Foreground="#7288A1" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="6">
+                            <Border Background="#101A27" CornerRadius="7" Padding="8,4">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Ellipse Width="6" Height="6" Fill="#4E8FFF" VerticalAlignment="Center" />
+                                    <TextBlock Name="CanvasStatText" Text="0 nodes · 0 wires" FontSize="9" Foreground="#8298B0" />
+                                </StackPanel>
+                            </Border>
+                            <Button Classes="mini" Click="StarterCircuitButton_Click" Content="Load demo" />
+                            <Button Name="ClearWorkspaceButton" Classes="mini" Click="ClearWorkspaceButton_Click" Content="Clear" />
+                        </StackPanel>
                     </Grid>
                 </Border>
-                <Border Grid.Row="1"
-                        Background="#0D131D"
-                        BorderBrush="#2B3B50"
-                        BorderThickness="0,1,0,0">
 
-                    <Grid RowDefinitions="32,*">
+                <ScrollViewer Name="WorkspaceScrollViewer" Grid.Row="1" Background="#080E17"
+                              HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                  <Grid Name="WorkspaceSurface" Width="760" Height="480" Background="#080E17">
+                    <controls:WorkspaceGrid IsHitTestVisible="False" />
+                    <Canvas Name="GraphCanvas" Background="Transparent" PointerPressed="GraphCanvas_PointerPressed"
+                            PointerMoved="GraphCanvas_PointerMoved" />
+                    <StackPanel Name="EmptyStatePanel" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Spacing="9" IsHitTestVisible="False" Margin="0,-16,0,0">
+                        <Canvas Width="210" Height="96" HorizontalAlignment="Center" Opacity="0.9">
+                            <Line StartPoint="44,48" EndPoint="87,48" Stroke="#315477" StrokeThickness="2" />
+                            <Line StartPoint="123,48" EndPoint="166,48" Stroke="#315477" StrokeThickness="2" />
+                            <Line StartPoint="105,66" EndPoint="105,84" Stroke="#315477" StrokeThickness="2" />
+                            <Border Canvas.Left="8" Canvas.Top="27" Width="38" Height="42" CornerRadius="8"
+                                    Background="#10243A" BorderBrush="#376792" BorderThickness="1">
+                                <TextBlock Text="MCU" FontSize="8" FontWeight="Bold" Foreground="#6EA9E3" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <Border Canvas.Left="87" Canvas.Top="31" Width="36" Height="34" CornerRadius="17"
+                                    Background="#301D25" BorderBrush="#754154" BorderThickness="1">
+                                <Ellipse Width="12" Height="12" Fill="#F46F8C" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <Border Canvas.Left="166" Canvas.Top="30" Width="36" Height="36" CornerRadius="8"
+                                    Background="#182219" BorderBrush="#3A6A49" BorderThickness="1">
+                                <TextBlock Text="GND" FontSize="7" FontWeight="Bold" Foreground="#6DBF87" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <Ellipse Canvas.Left="100" Canvas.Top="82" Width="10" Height="10" Fill="#4E8FFF" />
+                        </Canvas>
+                        <TextBlock Text="Build your first live circuit" FontSize="17" FontWeight="SemiBold"
+                                   Foreground="#DCE7F4" HorizontalAlignment="Center" />
+                        <TextBlock Text="Choose a component from the library or load the starter circuit."
+                                   FontSize="11" Foreground="#667D96" HorizontalAlignment="Center" />
+                        <Border Background="#0F1A27" BorderBrush="#23364D" BorderThickness="1"
+                                CornerRadius="8" Padding="10,5" HorizontalAlignment="Center" Margin="0,4,0,0">
+                            <TextBlock Text="TIP  Select a node, choose Connect, then click its target" FontSize="9" Foreground="#8097B0" />
+                        </Border>
+                    </StackPanel>
+                    <Border Name="ConnectionModeBadge" IsVisible="False" HorizontalAlignment="Center" VerticalAlignment="Top"
+                            Margin="0,14,0,0" Background="#173253" BorderBrush="#3973AE" BorderThickness="1"
+                            CornerRadius="9" Padding="12,7">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Ellipse Width="7" Height="7" Fill="#64AAFF" VerticalAlignment="Center" />
+                            <TextBlock Name="ConnectionModeText" Text="Choose a target component" FontSize="10"
+                                       FontWeight="SemiBold" Foreground="#BFD9FA" />
+                            <TextBlock Text="ESC to cancel" FontSize="9" Foreground="#6F94BC" Margin="7,0,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="14" Background="#0D1621"
+                            BorderBrush="#213248" BorderThickness="1" CornerRadius="8" Padding="10,6"
+                            Opacity="0.94" IsHitTestVisible="False">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="Drag to move" FontSize="9" Foreground="#7389A1" />
+                            <TextBlock Text="•" FontSize="9" Foreground="#34485F" />
+                            <TextBlock Text="Click empty space to deselect" FontSize="9" Foreground="#7389A1" />
+                        </StackPanel>
+                    </Border>
+                  </Grid>
+                </ScrollViewer>
 
-                        <Border Grid.Row="0"
-                                Background="#151F2C"
-                                Padding="10,0">
-
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-
-                                <StackPanel Orientation="Horizontal"
-                                            VerticalAlignment="Center"
-                                            Spacing="6">
-
-                                    <TextBlock Text="⌨"
-                                               Foreground="#7EC699"
-                                               VerticalAlignment="Center" />
-
-                                    <TextBlock Text="C++ / C ARDUINO SKETCH"
-                                               Foreground="#B0C4DE"
-                                               FontSize="11"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Center" />
+                <Border Grid.Row="2" Background="#070C13" BorderBrush="#1D2A3B" BorderThickness="0,1,0,0">
+                    <Grid RowDefinitions="38,*">
+                        <Border Grid.Row="0" Background="#0C131D" BorderBrush="#192638" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto" Margin="13,0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                                    <Border Width="22" Height="22" CornerRadius="6" Background="#17372C">
+                                        <TextBlock Text="&lt;/&gt;" FontSize="8" FontWeight="Bold" Foreground="#5BD49A"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <TextBlock Text="Arduino sketch" FontSize="11" FontWeight="SemiBold" Foreground="#C9D7E6" />
+                                    <Border Background="#151F2D" CornerRadius="5" Padding="6,2">
+                                        <TextBlock Text="C++" FontSize="8" FontWeight="Bold" Foreground="#8199B4" />
+                                    </Border>
                                 </StackPanel>
-
-                                <TextBlock Grid.Column="2"
-                                           Text="Arduino IDE Compatible"
-                                           Foreground="#6C7F93"
-                                           FontSize="11"
-                                           VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
+                                    <TextBlock Name="CodeMetricsText" Text="10 lines" FontSize="9" Foreground="#748BA4" />
+                                    <Border Background="#10251F" BorderBrush="#1E493A" BorderThickness="1" CornerRadius="6" Padding="7,3">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Ellipse Name="CodeStatusDot" Width="6" Height="6" Fill="#46D39A" VerticalAlignment="Center" />
+                                            <TextBlock Name="CodeStatusText" Text="Sketch ready" FontSize="8" FontWeight="SemiBold" Foreground="#7DDBB8" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
                             </Grid>
                         </Border>
-
-                        <TextBox Name="CodeEditorTextBox"
-                                 Grid.Row="1"
-                                 Background="#0A0F17"
-                                 Foreground="#85E89D"
-                                 FontFamily="Consolas,Monospace,Courier New"
-                                 FontSize="12"
-                                 BorderThickness="0"
-                                 AcceptsReturn="True"
-                                 TextWrapping="NoWrap"
-                                 Padding="10" />
+                        <ScrollViewer Name="CodeScrollViewer" Grid.Row="1"
+                                      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                          <Grid Name="CodeEditorSurface" ColumnDefinitions="42,*" Height="188">
+                            <Border Grid.Column="0" Background="#090F17" BorderBrush="#172232" BorderThickness="0,0,1,0">
+                                <TextBlock Name="CodeLineNumbersText" Text="1&#10;2&#10;3&#10;4&#10;5&#10;6&#10;7&#10;8&#10;9&#10;10"
+                                           FontFamily="Menlo,Consolas,Monospace" FontSize="11" LineHeight="16"
+                                           Foreground="#6B829B" TextAlignment="Right" Margin="0,10,8,0" />
+                            </Border>
+                            <TextBox Name="CodeEditorTextBox" Grid.Column="1" Background="#080D14" Foreground="#8DDCAF"
+                                     FontFamily="Menlo,Consolas,Monospace" FontSize="11" LineHeight="16" BorderThickness="0"
+                                     AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap" Padding="12,8"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                     ScrollViewer.VerticalScrollBarVisibility="Disabled" />
+                          </Grid>
+                        </ScrollViewer>
                     </Grid>
                 </Border>
-
             </Grid>
 
-            <Border Grid.Column="2"
-                    Background="#151E2B"
-                    BorderBrush="#2B3B50"
-                    BorderThickness="1,0,0,0"
-                    Padding="14">
-
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-
-                    <StackPanel>
-
-                        <TextBlock Text="INSPECTOR"
-                                   Foreground="#8FA4BE"
-                                   FontSize="11"
-                                   FontWeight="Bold"
-                                   Margin="0,0,0,12" />
-
-                        <TextBlock Name="SelectedElementTitle"
-                                   Text="Circuit Workspace"
-                                   FontWeight="SemiBold"
-                                   FontSize="15" />
-
-                        <TextBlock Name="SelectedElementDescription"
-                                   Text="Welcome to the SimForge simulation environment. Add components from the library to begin building your circuit."
-                                   TextWrapping="Wrap"
-                                   Foreground="#AFC1D6"
-                                   Margin="0,6,0,0"
-                                   FontSize="12" />
-
-                        <Expander Header="Tutorial"
-                                  IsExpanded="True"
-                                  Margin="0,14,0,0">
-
-                            <TextBlock Name="TutorialText"
-                                       Text="Build your circuit by adding components and connecting their pins."
-                                       TextWrapping="Wrap"
-                                       Foreground="#A0B6D0"
-                                       FontSize="12"
-                                       Margin="2,6,0,0" />
-                        </Expander>
-
-                        <Expander Header="Information"
-                                  IsExpanded="True"
-                                  Margin="0,6,0,0">
-
-                            <TextBlock Name="GeneralInfoText"
-                                       Text="Workspace ready."
-                                       TextWrapping="Wrap"
-                                       Foreground="#AFC1D6"
-                                       FontSize="12"
-                                       Margin="2,6,0,0" />
-                        </Expander>
-
-                        <Expander Header="Pins &amp; Connections"
-                                  Margin="0,6,0,0">
-
-                            <TextBlock Name="PinsText"
-                                       Text="—"
-                                       TextWrapping="Wrap"
-                                       Foreground="#AFC1D6"
-                                       FontSize="12"
-                                       Margin="2,6,0,0" />
-                        </Expander>
-
-                        <Expander Header="Parameters &amp; Settings"
-                                  IsExpanded="True"
-                                  Margin="0,6,0,0">
-
-                            <StackPanel Margin="2,6,0,0"
-                                        Spacing="8">
-
-                                <TextBlock Name="ParametersText"
-                                           Text="Circuit Analyzer"
-                                           TextWrapping="Wrap"
-                                           Foreground="#AFC1D6"
-                                           FontSize="12" />
-
-                                <StackPanel Name="LedColorPanel"
-                                            Orientation="Horizontal"
-                                            Spacing="6"
-                                            IsVisible="False">
-
-                                    <TextBlock Text="LED Color:"
-                                               Foreground="#AFC1D6"
-                                               FontSize="12"
-                                               VerticalAlignment="Center" />
-
-                                    <ComboBox Name="LedColorComboBox"
-                                              SelectionChanged="LedColorComboBox_SelectionChanged"
-                                              Width="110"
-                                              Height="28"
-                                              FontSize="12">
-
-                                        <ComboBoxItem Content="Red"
-                                                      IsSelected="True" />
-
-                                        <ComboBoxItem Content="Green" />
-
-                                        <ComboBoxItem Content="Blue" />
-
-                                        <ComboBoxItem Content="Yellow" />
-
-                                        <ComboBoxItem Content="White" />
-
-                                    </ComboBox>
+            <Border Grid.Column="2" Background="#0A1019" BorderBrush="#1D2A3B" BorderThickness="1,0,0,0">
+                <Grid RowDefinitions="Auto,*" Margin="14,14,14,10">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="2,0,2,12">
+                        <StackPanel>
+                            <TextBlock Text="Inspector" FontSize="16" FontWeight="SemiBold" Foreground="#EDF4FC" />
+                            <TextBlock Text="Context, values and diagnostics" FontSize="10" Foreground="#71879F" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="#101B29" CornerRadius="7" Padding="7,3" VerticalAlignment="Center">
+                            <TextBlock Name="SelectedElementKindText" Text="WORKSPACE" FontSize="8" FontWeight="Bold" Foreground="#708AA7" />
+                        </Border>
+                    </Grid>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Spacing="9">
+                            <Border Classes="card" Padding="13">
+                                <Grid ColumnDefinitions="46,*">
+                                    <Border Name="InspectorSymbolBorder" Width="40" Height="40" CornerRadius="11"
+                                            Background="#152942" BorderBrush="#2C527A" BorderThickness="1" VerticalAlignment="Top">
+                                        <TextBlock Name="SelectedElementSymbol" Text="SF" FontSize="10" FontWeight="Bold"
+                                                   Foreground="#78ADFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="11,0,0,0">
+                                        <TextBlock Name="SelectedElementTitle" Text="Circuit workspace" FontSize="14"
+                                                   FontWeight="SemiBold" Foreground="#E7EFF8" />
+                                        <TextBlock Name="SelectedElementDescription" Text="Add components from the library to start designing."
+                                                   TextWrapping="Wrap" FontSize="10" LineHeight="15" Foreground="#8297AE" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <Border Classes="card">
+                                <StackPanel Spacing="7">
+                                    <TextBlock Text="OVERVIEW" FontSize="9" FontWeight="Bold" Foreground="#67819D" />
+                                    <TextBlock Name="GeneralInfoText" Text="The design canvas is ready." TextWrapping="Wrap"
+                                               FontSize="10" LineHeight="15" Foreground="#B2C1D1" />
+                                    <Separator Margin="0,2" />
+                                    <TextBlock Text="PIN MAP" FontSize="9" FontWeight="Bold" Foreground="#67819D" />
+                                    <TextBlock Name="PinsText" Text="No pins selected" TextWrapping="Wrap"
+                                               FontFamily="Menlo,Consolas,Monospace" FontSize="9" Foreground="#8FB7E2" />
                                 </StackPanel>
-
-                            </StackPanel>
-                        </Expander>
-
-                        <Separator Margin="0,14,0,12" />
-
-                        <TextBlock Text="SIMULATION STATUS"
-                                   Foreground="#8FA4BE"
-                                   FontSize="11"
-                                   FontWeight="Bold" />
-
-                        <Grid ColumnDefinitions="*,Auto"
-                              Margin="0,8,0,0">
-
-                            <TextBlock Text="Elapsed Time"
-                                       Foreground="#AFC1D6"
-                                       FontSize="12" />
-
-                            <TextBlock Name="TimeText"
-                                       Grid.Column="1"
-                                       Text="0.000 s"
-                                       FontSize="12" />
-                        </Grid>
-                        
-                        <Grid ColumnDefinitions="*,Auto"
-                              Margin="0,6,0,0">
-
-                            <TextBlock Text="Short Circuit"
-                                       Foreground="#AFC1D6"
-                                       FontSize="12" />
-
-                            <TextBlock Name="ShortCircuitStateText"
-                                       Grid.Column="1"
-                                       Foreground="#86D8A9"
-                                       Text="Not Detected"
-                                       FontSize="12" />
-                        </Grid>
-                        
-                        <Grid ColumnDefinitions="*,Auto"
-                              Margin="0,6,0,0">
-
-                            <TextBlock Text="Circuit Status"
-                                       Foreground="#AFC1D6"
-                                       FontSize="12" />
-
-                            <TextBlock Name="CircuitStateText"
-                                       Grid.Column="1"
-                                       Foreground="#86D8A9"
-                                       Text="Valid"
-                                       FontSize="12" />
-                        </Grid>
-
-                        <Separator Margin="0,14,0,12" />
-                        
-                        <TextBlock Text="CIRCUIT HINT"
-                                   Foreground="#8FA4BE"
-                                   FontSize="11"
-                                   FontWeight="Bold" />
-
-                        <TextBlock Name="HintText"
-                                   Text="Run the simulation to verify your circuit."
-                                   TextWrapping="Wrap"
-                                   Foreground="#AFC1D6"
-                                   FontSize="12"
-                                   Margin="0,6,0,0" />
-
-                    </StackPanel>
-                </ScrollViewer>
+                            </Border>
+                            <Border Classes="card">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="PARAMETERS" FontSize="9" FontWeight="Bold" Foreground="#67819D" />
+                                    <TextBlock Name="ParametersText" Text="Select a component to inspect its values."
+                                               TextWrapping="Wrap" FontSize="10" Foreground="#B2C1D1" />
+                                    <StackPanel Name="LedColorPanel" IsVisible="False" Spacing="5" Margin="0,3,0,0">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="Emitter color" FontSize="10" Foreground="#8FA4BA" VerticalAlignment="Center" />
+                                            <ComboBox Name="LedColorComboBox" Grid.Column="1" Width="112" Height="30" FontSize="10"
+                                                      SelectionChanged="LedColorComboBox_SelectionChanged">
+                                                <ComboBoxItem Content="Red" IsSelected="True" />
+                                                <ComboBoxItem Content="Green" />
+                                                <ComboBoxItem Content="Blue" />
+                                                <ComboBoxItem Content="Amber" />
+                                                <ComboBoxItem Content="White" />
+                                            </ComboBox>
+                                        </Grid>
+                                    </StackPanel>
+                                    <StackPanel Name="SignalValuePanel" IsVisible="False" Spacing="5" Margin="0,3,0,0">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Name="SignalValueLabel" Text="Input value" FontSize="10" Foreground="#8FA4BA" />
+                                            <TextBlock Name="SignalValueText" Grid.Column="1" Text="50" FontSize="10"
+                                                       FontFamily="Menlo,Consolas,Monospace" Foreground="#65CFA8" />
+                                        </Grid>
+                                        <Slider Name="SignalValueSlider" Minimum="0" Maximum="100" Value="50"
+                                                ValueChanged="SignalValueSlider_ValueChanged" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                            <Border Classes="card">
+                                <StackPanel Spacing="9">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="SIMULATION" FontSize="9" FontWeight="Bold" Foreground="#67819D" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                            <Ellipse Name="SimulationPulse" Width="6" Height="6" Fill="#496173" VerticalAlignment="Center" />
+                                            <TextBlock Name="SimulationStateText" Text="IDLE" FontSize="8" FontWeight="Bold" Foreground="#71899F" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="Elapsed time" FontSize="10" Foreground="#8EA2B8" />
+                                        <TextBlock Name="TimeText" Grid.Column="1" Text="0.000 s" FontFamily="Menlo,Consolas,Monospace"
+                                                   FontSize="10" Foreground="#D1DEEA" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="Electrical safety" FontSize="10" Foreground="#8EA2B8" />
+                                        <TextBlock Name="ShortCircuitStateText" Grid.Column="1" Text="Safe" FontSize="10" Foreground="#5BD39E" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="Circuit state" FontSize="10" Foreground="#8EA2B8" />
+                                        <TextBlock Name="CircuitStateText" Grid.Column="1" Text="Awaiting components" FontSize="10" Foreground="#7FA6CF" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                            <Border Classes="card" Background="#101C28" BorderBrush="#263A50">
+                                <StackPanel Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                        <Border Width="20" Height="20" CornerRadius="6" Background="#17344A">
+                                            <TextBlock Text="i" FontSize="11" FontWeight="Bold" Foreground="#70B8EB"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <TextBlock Text="GUIDANCE" FontSize="9" FontWeight="Bold" Foreground="#7194B1" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <TextBlock Name="HintText" Text="Load the starter circuit for a guided, working example."
+                                               TextWrapping="Wrap" FontSize="10" LineHeight="15" Foreground="#9EB2C6" />
+                                    <TextBlock Name="TutorialText" Text="Connections are validated by signal type and safety rules."
+                                               TextWrapping="Wrap" FontSize="9" LineHeight="14" Foreground="#758CA4" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
             </Border>
-
         </Grid>
-        
-        <Border Grid.Row="2"
-                Background="#172131"
-                BorderBrush="#2B3B50"
-                BorderThickness="0,1,0,0"
-                Padding="14,0">
 
-            <TextBlock Name="FooterText"
-                       Text="SimForge 0.2"
-                       VerticalAlignment="Center"
-                       Foreground="#71839B"
-                       FontSize="12" />
-
+        <Border Grid.Row="2" Background="#0A1018" BorderBrush="#1B2838" BorderThickness="0,1,0,0">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" Margin="15,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="6">
+                    <Ellipse Width="6" Height="6" Fill="#4E8FFF" />
+                    <TextBlock Name="ComponentCountText" Text="0 components" FontSize="9" Foreground="#748AA1" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" Name="ConnectionCountText" Text="0 wires" FontSize="9" Foreground="#748AA1"
+                           VerticalAlignment="Center" Margin="17,0,0,0" />
+                <TextBlock Grid.Column="2" Name="CursorPositionText" Text="X 0  ·  Y 0" FontSize="9" Foreground="#7D92AA"
+                           FontFamily="Menlo,Consolas,Monospace" VerticalAlignment="Center" Margin="17,0,0,0" />
+                <TextBlock Grid.Column="3" Name="FooterText" Text="SimForge 0.4.0 · Ready to design" FontSize="9"
+                           Foreground="#71869D" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Spacing="13">
+                    <TextBlock Text="SPACE  Run / pause" FontSize="9" Foreground="#71869D" />
+                    <TextBlock Text="DEL  Remove" FontSize="9" Foreground="#71869D" />
+                    <TextBlock Text="ESC  Cancel" FontSize="9" Foreground="#71869D" />
+                </StackPanel>
+            </Grid>
         </Border>
-
     </Grid>
 </Window>
