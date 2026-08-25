@@ -4,7 +4,9 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.3.0</Version>
+    <Version>0.4.0</Version>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <UsedAvaloniaProducts></UsedAvaloniaProducts>
     <AssemblyName>SimForge</AssemblyName>
     <Product>SimForge Circuit Studio</Product>
     <Description>Interactive circuit design and simulation studio.</Description>

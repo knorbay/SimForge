@@ -478,7 +478,7 @@
                            VerticalAlignment="Center" Margin="17,0,0,0" />
                 <TextBlock Grid.Column="2" Name="CursorPositionText" Text="X 0  ·  Y 0" FontSize="9" Foreground="#7D92AA"
                            FontFamily="Menlo,Consolas,Monospace" VerticalAlignment="Center" Margin="17,0,0,0" />
-                <TextBlock Grid.Column="3" Name="FooterText" Text="SimForge 0.3 · Ready to design" FontSize="9"
+                <TextBlock Grid.Column="3" Name="FooterText" Text="SimForge 0.4.0 · Ready to design" FontSize="9"
                            Foreground="#71869D" VerticalAlignment="Center" HorizontalAlignment="Center" />
                 <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Spacing="13">
                     <TextBlock Text="SPACE  Run / pause" FontSize="9" Foreground="#71869D" />

@@ -262,7 +262,7 @@ public partial class MainWindow : Window
         {
             StatusText.Text = "Code issue";
             HintText.Text = "Fix the reported sketch structure issue before starting the simulation.";
-            FooterText.Text = "SimForge 0.3 · Simulation blocked by sketch diagnostics";
+            FooterText.Text = "SimForge 0.4.0 · Simulation blocked by sketch diagnostics";
             return;
         }
 
@@ -272,7 +272,7 @@ public partial class MainWindow : Window
         {
             StatusText.Text = "Safety lock";
             HintText.Text = "Simulation blocked: add a current-limiting resistor to the unsafe LED path.";
-            FooterText.Text = "SimForge 0.3 · Simulation blocked by electrical safety";
+            FooterText.Text = "SimForge 0.4.0 · Simulation blocked by electrical safety";
             return;
         }
 
@@ -280,7 +280,7 @@ public partial class MainWindow : Window
         {
             StatusText.Text = "Circuit incomplete";
             HintText.Text = "Simulation needs a driven output, a protected LED path, and a ground return.";
-            FooterText.Text = "SimForge 0.3 · Complete the circuit before running";
+            FooterText.Text = "SimForge 0.4.0 · Complete the circuit before running";
             return;
         }
 
@@ -297,7 +297,7 @@ public partial class MainWindow : Window
         StatusText.Text = "Running";
         var drivenPins = string.Join(", ", _sketchPinModes.Keys.OrderBy(pin => pin).Select(pin => $"D{pin}"));
         HintText.Text = $"The sketch is driving {drivenPins} with a {_blinkPeriodSeconds:0.##} s timing interval.";
-        FooterText.Text = "SimForge 0.3 · Live simulation";
+        FooterText.Text = "SimForge 0.4.0 · Live simulation";
         EvaluateCircuitState();
     }
 
@@ -314,7 +314,7 @@ public partial class MainWindow : Window
         ArduinoStatus.Text = "Simulation paused";
         ArduinoStatus.Foreground = Brush("#C2A26D");
         StatusText.Text = "Paused";
-        FooterText.Text = "SimForge 0.3 · Simulation paused";
+        FooterText.Text = "SimForge 0.4.0 · Simulation paused";
         EvaluateCircuitState();
     }
 
@@ -322,7 +322,7 @@ public partial class MainWindow : Window
     {
         ResetSimulationState();
         HintText.Text = "Simulation state reset. Your circuit and sketch were preserved.";
-        FooterText.Text = "SimForge 0.3 · Simulation reset";
+        FooterText.Text = "SimForge 0.4.0 · Simulation reset";
     }
 
     private void ResetSimulationState()
@@ -1109,7 +1109,7 @@ public partial class MainWindow : Window
         ArduinoStatus.Foreground = Brush("#FF9AAE");
         StatusText.Text = "Safety lock";
         HintText.Text = "Simulation stopped immediately because the circuit became unsafe. Correct the LED path before running again.";
-        FooterText.Text = "SimForge 0.3 · Emergency safety stop";
+        FooterText.Text = "SimForge 0.4.0 · Emergency safety stop";
     }
 
     private bool EvaluateCircuitState()
@@ -1573,7 +1573,7 @@ public partial class MainWindow : Window
         UpdateWorkspaceUi();
         HintText.Text = "Starter circuit ready. Press Run to simulate the blinking LED on pin D13.";
         TutorialText.Text = "The resistor limits LED current and the ground node completes the return path.";
-        FooterText.Text = "SimForge 0.3 · Starter circuit loaded";
+        FooterText.Text = "SimForge 0.4.0 · Starter circuit loaded";
         StatusText.Text = "Demo ready";
     }
 
@@ -1615,7 +1615,7 @@ public partial class MainWindow : Window
         HintText.Text = action == WorkspaceReplacementAction.Clear
             ? "This removes every component and wire. Click Confirm clear within four seconds to continue."
             : "Loading the demo replaces the current workspace. Click Confirm load within four seconds to continue.";
-        FooterText.Text = "SimForge 0.3 · Waiting for confirmation";
+        FooterText.Text = "SimForge 0.4.0 · Waiting for confirmation";
         return false;
     }
 
@@ -1637,7 +1637,7 @@ public partial class MainWindow : Window
         {
             StatusText.Text = _isSimulationRunning ? "Running" : "Ready";
             HintText.Text = "Confirmation expired. Your workspace was left unchanged.";
-            FooterText.Text = "SimForge 0.3 · Workspace unchanged";
+            FooterText.Text = "SimForge 0.4.0 · Workspace unchanged";
         }
     }
 
@@ -1665,7 +1665,7 @@ public partial class MainWindow : Window
         if (announce)
         {
             HintText.Text = "Workspace cleared. Add a component or load the starter circuit.";
-            FooterText.Text = "SimForge 0.3 · New empty circuit";
+            FooterText.Text = "SimForge 0.4.0 · New empty circuit";
         }
     }
 
@@ -1678,7 +1678,7 @@ public partial class MainWindow : Window
         ClearSelection();
         ShowWorkspaceInspector();
         CursorPositionText.Text = $"X {point.X:0}  ·  Y {point.Y:0}";
-        FooterText.Text = "SimForge 0.3 · Workspace selected";
+        FooterText.Text = "SimForge 0.4.0 · Workspace selected";
         StatusText.Text = _isSimulationRunning ? "Running" : "Ready";
     }
 

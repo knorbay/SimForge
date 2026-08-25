@@ -78,4 +78,40 @@ public sealed class ArduinoSketchProgramTests
 
         Assert.Equal(0.05, program.IntervalSeconds);
     }
+
+    [Fact]
+    public void Analyze_IgnoresWritesAndBracesInsideCommentsAndStrings()
+    {
+        const string sketch = """
+                              // digitalWrite(7, HIGH); }
+                              void setup() { }
+                              void loop() {
+                                const char* example = "digitalWrite(8, LOW); }";
+                                /* digitalWrite(9, HIGH); { */
+                                digitalWrite(13, LOW);
+                              }
+                              """;
+
+        var program = ArduinoSketchProgram.Analyze(sketch);
+
+        Assert.True(program.IsValid);
+        Assert.Single(program.Outputs);
+        Assert.Equal(DigitalOutputMode.Low, program.Outputs[13]);
+    }
+
+    [Fact]
+    public void Analyze_RejectsOverflowingPinNumberWithoutThrowing()
+    {
+        const string sketch = """
+                              void setup() { }
+                              void loop() { digitalWrite(999999999999999999999999, HIGH); }
+                              """;
+
+        var exception = Record.Exception(() => ArduinoSketchProgram.Analyze(sketch));
+        var program = ArduinoSketchProgram.Analyze(sketch);
+
+        Assert.Null(exception);
+        Assert.False(program.IsValid);
+        Assert.Equal("Pin number is too large", program.Diagnostic);
+    }
 }

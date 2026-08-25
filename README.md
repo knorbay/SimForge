@@ -1,6 +1,6 @@
 # SimForge Circuit Studio
 
-SimForge is a modern desktop workspace for building, inspecting, and simulating electronic circuits. Version 0.3 introduces an English-first interface, a searchable component library, pin-aware wiring, Arduino-style sketch analysis, circuit safety checks, and a polished engineering canvas.
+SimForge is a modern desktop workspace for building, inspecting, and simulating electronic circuits. Version 0.4.0 includes an English-first interface, a searchable component library, pin-aware wiring, safer Arduino-style sketch analysis, circuit safety checks, and a polished engineering canvas.
 
 ## Highlights
 
@@ -37,13 +37,19 @@ Each command creates a self-contained application that does not require a separa
 
 ```bash
 # Windows x64
-dotnet publish SimForge/SimForge.csproj -c Release -r win-x64 --self-contained true -o artifacts/SimForge-0.3-windows-x64
+dotnet publish SimForge/SimForge.csproj -c Release -r win-x64 --self-contained true -o artifacts/SimForge-0.4.0-windows-x64
 
 # Linux x64
-dotnet publish SimForge/SimForge.csproj -c Release -r linux-x64 --self-contained true -o artifacts/SimForge-0.3-linux-x64
+dotnet publish SimForge/SimForge.csproj -c Release -r linux-x64 --self-contained true -o artifacts/SimForge-0.4.0-linux-x64
 
 # macOS Apple Silicon
-dotnet publish SimForge/SimForge.csproj -c Release -r osx-arm64 --self-contained true -o artifacts/SimForge-0.3-macos-arm64
+dotnet publish SimForge/SimForge.csproj -c Release -r osx-arm64 --self-contained true -o artifacts/SimForge-0.4.0-macos-arm64
+```
+
+To create a signed macOS application bundle and upload-ready ZIP:
+
+```bash
+./scripts/package-macos.sh 0.4.0
 ```
 
 On Linux, mark the executable as runnable if the archive tool does not preserve permissions:
