@@ -139,6 +139,25 @@ public sealed class ArduinoSketchProgramTests
     }
 
     [Fact]
+    public void Analyze_ResolvesDefinesWithWindowsLineEndings()
+    {
+        const string sketch = "#define DHT_PIN 7\r\n" +
+                              "DHT dht(DHT_PIN, DHT11);\r\n" +
+                              "void setup() { pinMode(13, OUTPUT); }\r\n" +
+                              "void loop() {\r\n" +
+                              "  float temperature = dht.readTemperature();\r\n" +
+                              "  if (temperature >= 30) digitalWrite(13, HIGH);\r\n" +
+                              "  else digitalWrite(13, LOW);\r\n" +
+                              "}";
+
+        var program = ArduinoSketchProgram.Analyze(sketch);
+
+        Assert.True(program.IsValid, program.Diagnostic);
+        Assert.Equal("D7", Assert.Single(program.InputPins));
+        Assert.Single(program.ConditionalOutputs);
+    }
+
+    [Fact]
     public void Analyze_PreservesAsymmetricBlinkTiming()
     {
         const string sketch = """

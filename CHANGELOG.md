@@ -6,7 +6,7 @@
 - Added ordered, actionable diagnostics for missing controllers, sensor power, signal wiring, empty sketch pins, unused outputs, incomplete LED loops, and unsafe LED paths.
 - Added beginner-friendly explanations for common sketch diagnostics.
 - Added complete starter sketches for analog sensors, HC-SR04, and DHT11 circuits.
-- Increased regression coverage to 51 tests.
+- Increased regression coverage to 52 tests, including Windows CRLF sketch parsing.
 
 ## 0.6.0 - 2026-09-01
 

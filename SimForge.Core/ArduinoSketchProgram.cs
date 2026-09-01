@@ -240,7 +240,7 @@ public sealed class ArduinoSketchProgram
 
         foreach (Match match in Regex.Matches(
                      code,
-                     @"(?m)^\s*#\s*define\s+(?<name>[A-Za-z_]\w*)\s+(?<value>[^\r\n]+)$"))
+                     @"(?m)^[ \t]*#[ \t]*define[ \t]+(?<name>[A-Za-z_]\w*)[ \t]+(?<value>[^\r\n]+?)[ \t]*\r?$"))
             candidates.Add((match.Groups["name"].Value, match.Groups["value"].Value.Trim()));
 
         foreach (Match match in Regex.Matches(
