@@ -26,13 +26,15 @@ public partial class MainWindow : Window
     private readonly List<CategoryEntry> _categoryEntries = new();
 
     private double _timeSeconds;
-    private double _blinkAccumulatorSeconds;
-    private double _blinkPeriodSeconds = 1;
     private bool _isSimulationRunning;
     private bool _hasShortCircuit;
     private bool _isUpdatingInspector;
-    private readonly Dictionary<int, DigitalOutputMode> _sketchPinModes = new();
+    private readonly Dictionary<int, DigitalOutputProfile> _sketchOutputProfiles = new();
+    private readonly List<ConditionalOutputRule> _conditionalOutputRules = new();
+    private readonly Dictionary<int, double> _pinPhaseElapsedSeconds = new();
     private readonly Dictionary<int, bool> _digitalPinStates = new();
+    private readonly HashSet<string> _sketchInputPins = new(StringComparer.OrdinalIgnoreCase);
+    private ArduinoSketchProgram? _lastSketchAnalysis;
     private Border? _selectedComponent;
     private VisualConnection? _selectedConnection;
     private Border? _connectionStart;
@@ -68,7 +70,10 @@ public partial class MainWindow : Window
         AutomationProperties.SetName(ComponentSearchBox, "Search components");
         AutomationProperties.SetHelpText(ComponentSearchBox, "Filter the component library by name, type, or capability.");
         AutomationProperties.SetName(CodeEditorTextBox, "Arduino C++ sketch editor");
-        AutomationProperties.SetHelpText(CodeEditorTextBox, "Edit the setup and loop functions that drive the simulation.");
+        AutomationProperties.SetHelpText(CodeEditorTextBox,
+            "Edit setup and loop. SimForge supports pin constants, reads, writes, delays, and simple sensor if/else rules.");
+        ToolTip.SetTip(CodeEditorTextBox,
+            "Simulation subset: pin constants, digitalWrite, analogRead, digitalRead, pulseIn, DHT reads, and simple if/else.");
         AutomationProperties.SetName(LedColorComboBox, "LED emitter color");
         AutomationProperties.SetName(SignalValueSlider, "Component input value");
         AutomationProperties.SetName(GraphCanvas, "Circuit design canvas");
@@ -76,6 +81,7 @@ public partial class MainWindow : Window
         AutomationProperties.SetLiveSetting(StatusText, AutomationLiveSetting.Polite);
         AutomationProperties.SetLiveSetting(HintText, AutomationLiveSetting.Polite);
         AutomationProperties.SetLiveSetting(CodeStatusText, AutomationLiveSetting.Polite);
+        AutomationProperties.SetLiveSetting(AssistantSummaryText, AutomationLiveSetting.Polite);
         AutomationProperties.SetLiveSetting(ShortCircuitBadge, AutomationLiveSetting.Assertive);
     }
 
@@ -262,7 +268,7 @@ public partial class MainWindow : Window
         {
             StatusText.Text = "Code issue";
             HintText.Text = "Fix the reported sketch structure issue before starting the simulation.";
-            FooterText.Text = "SimForge 0.4.0 · Simulation blocked by sketch diagnostics";
+            FooterText.Text = "SimForge 0.7.0 · Simulation blocked by sketch diagnostics";
             return;
         }
 
@@ -272,15 +278,15 @@ public partial class MainWindow : Window
         {
             StatusText.Text = "Safety lock";
             HintText.Text = "Simulation blocked: add a current-limiting resistor to the unsafe LED path.";
-            FooterText.Text = "SimForge 0.4.0 · Simulation blocked by electrical safety";
+            FooterText.Text = "SimForge 0.7.0 · Simulation blocked by electrical safety";
             return;
         }
 
         if (!circuitReady)
         {
             StatusText.Text = "Circuit incomplete";
-            HintText.Text = "Simulation needs a driven output, a protected LED path, and a ground return.";
-            FooterText.Text = "SimForge 0.4.0 · Complete the circuit before running";
+            HintText.Text = "Complete an LED path or wire a powered sensor signal to a matching controller input.";
+            FooterText.Text = "SimForge 0.7.0 · Complete the circuit before running";
             return;
         }
 
@@ -295,9 +301,9 @@ public partial class MainWindow : Window
         ArduinoStatus.Text = "Simulation live";
         ArduinoStatus.Foreground = Brush("#79DBB9");
         StatusText.Text = "Running";
-        var drivenPins = string.Join(", ", _sketchPinModes.Keys.OrderBy(pin => pin).Select(pin => $"D{pin}"));
-        HintText.Text = $"The sketch is driving {drivenPins} with a {_blinkPeriodSeconds:0.##} s timing interval.";
-        FooterText.Text = "SimForge 0.4.0 · Live simulation";
+        ApplyConditionalOutputs();
+        HintText.Text = BuildSimulationHint();
+        FooterText.Text = "SimForge 0.7.0 · Live simulation";
         EvaluateCircuitState();
     }
 
@@ -314,7 +320,7 @@ public partial class MainWindow : Window
         ArduinoStatus.Text = "Simulation paused";
         ArduinoStatus.Foreground = Brush("#C2A26D");
         StatusText.Text = "Paused";
-        FooterText.Text = "SimForge 0.4.0 · Simulation paused";
+        FooterText.Text = "SimForge 0.7.0 · Simulation paused";
         EvaluateCircuitState();
     }
 
@@ -322,7 +328,7 @@ public partial class MainWindow : Window
     {
         ResetSimulationState();
         HintText.Text = "Simulation state reset. Your circuit and sketch were preserved.";
-        FooterText.Text = "SimForge 0.4.0 · Simulation reset";
+        FooterText.Text = "SimForge 0.7.0 · Simulation reset";
     }
 
     private void ResetSimulationState()
@@ -330,9 +336,11 @@ public partial class MainWindow : Window
         _simulationTimer.Stop();
         _isSimulationRunning = false;
         _timeSeconds = 0;
-        _blinkAccumulatorSeconds = 0;
-        foreach (var pin in _sketchPinModes.Keys.ToList())
-            _digitalPinStates[pin] = _sketchPinModes[pin] == DigitalOutputMode.High;
+        foreach (var (pinNumber, profile) in _sketchOutputProfiles)
+        {
+            _digitalPinStates[pinNumber] = profile.InitialState;
+            _pinPhaseElapsedSeconds[pinNumber] = 0;
+        }
         TimeText.Text = "0.000 s";
         RunButton.IsEnabled = true;
         StopButton.IsEnabled = false;
@@ -378,6 +386,7 @@ public partial class MainWindow : Window
             LedColor = "Red"
         };
         _addedComponents.Add(node, editorComponent);
+        UpdateSensorReading(editorComponent);
         _addedComponentCount++;
 
         if (select)
@@ -787,7 +796,7 @@ public partial class MainWindow : Window
         InspectorSymbolBorder.BorderBrush = Brush(WithAlpha(info.Accent, "77"));
         GeneralInfoText.Text = info.Summary;
         PinsText.Text = string.Join("  ·  ", component.Model.Pins.Select(pin => $"{pin.Name} [{pin.SignalType}]").ToArray());
-        ParametersText.Text = BuildParameterSummary(info, component.Model.ComponentValue);
+        ParametersText.Text = BuildComponentParameterSummary(component);
         TutorialText.Text = info.Tutorial;
         HintText.Text = $"{info.Name} selected. Inspect its pins, parameters, or start a connection.";
         StatusText.Text = "Selected";
@@ -818,6 +827,7 @@ public partial class MainWindow : Window
             UpdateSignalValueText(info, component.Model.ComponentValue);
         }
         _isUpdatingInspector = false;
+        UpdateCircuitAssistant();
     }
 
     private void SelectConnection(VisualConnection visualConnection)
@@ -843,6 +853,7 @@ public partial class MainWindow : Window
         TutorialText.Text = "Select the wire and press Delete to remove it. Routing updates automatically when nodes move.";
         HintText.Text = "This wire passed SimForge signal compatibility checks.";
         StatusText.Text = "Wire selected";
+        UpdateCircuitAssistant();
     }
 
     private void ShowWorkspaceInspector()
@@ -862,6 +873,7 @@ public partial class MainWindow : Window
         TutorialText.Text = "Select a node, choose Connect, then click a compatible target. Press Escape to cancel connection mode.";
         LedColorPanel.IsVisible = false;
         SignalValuePanel.IsVisible = false;
+        UpdateCircuitAssistant();
     }
 
     private void RemoveButton_Click(object? sender, RoutedEventArgs e) => RemoveSelectedElement();
@@ -1046,8 +1058,23 @@ public partial class MainWindow : Window
         if (second.Model.Kind == NodeKind.Microcontroller && to.Name == "D13" &&
             from.SignalType != PinSignalType.Power)
             score += first.Info.Name == "GND" ? -30 : 30;
+        if (first.Model.Kind == NodeKind.Microcontroller && second.Model.Kind == NodeKind.Sensor)
+            score += ScoreSketchAwareControllerPin(from, to);
+        if (second.Model.Kind == NodeKind.Microcontroller && first.Model.Kind == NodeKind.Sensor)
+            score += ScoreSketchAwareControllerPin(to, from);
         score -= GetPinUseCount(from) * 45;
         score -= GetPinUseCount(to) * 45;
+        return score;
+    }
+
+    private int ScoreSketchAwareControllerPin(NodePin controllerPin, NodePin sensorPin)
+    {
+        var score = 0;
+        if (sensorPin.Direction == PinDirection.Output && _sketchInputPins.Contains(controllerPin.Name))
+            score += 70;
+        if (sensorPin.Direction == PinDirection.Input && TryGetDigitalPinNumber(controllerPin, out var pinNumber) &&
+            _sketchOutputProfiles.ContainsKey(pinNumber))
+            score += 55;
         return score;
     }
 
@@ -1059,7 +1086,7 @@ public partial class MainWindow : Window
         var sourcePins = _addedComponents.Values
             .Where(component => component.Model.Kind == NodeKind.Microcontroller)
             .SelectMany(component => component.Model.Pins)
-            .Where(pin => pin.Direction == PinDirection.Output &&
+            .Where(pin => pin.Direction is PinDirection.Output or PinDirection.Bidirectional &&
                           pin.SignalType is PinSignalType.Digital or PinSignalType.Power)
             .ToList();
         var groundPins = GetGroundReferencePins().ToList();
@@ -1109,7 +1136,7 @@ public partial class MainWindow : Window
         ArduinoStatus.Foreground = Brush("#FF9AAE");
         StatusText.Text = "Safety lock";
         HintText.Text = "Simulation stopped immediately because the circuit became unsafe. Correct the LED path before running again.";
-        FooterText.Text = "SimForge 0.4.0 · Emergency safety stop";
+        FooterText.Text = "SimForge 0.7.0 · Emergency safety stop";
     }
 
     private bool EvaluateCircuitState()
@@ -1119,6 +1146,8 @@ public partial class MainWindow : Window
         var drivenPins = GetDrivenPins().ToList();
         var groundPins = GetGroundReferencePins().ToList();
         var leds = _addedComponents.Values.Where(component => component.Info.Name == "LED").ToList();
+        var onlineSensors = GetOnlineSensors().ToList();
+        circuitReady |= onlineSensors.Count > 0;
 
         foreach (var led in leds)
         {
@@ -1152,7 +1181,15 @@ public partial class MainWindow : Window
         }
         else if (circuitReady)
         {
-            CircuitStateText.Text = _isSimulationRunning ? (anyLedOn ? "Live · output high" : "Live · output low") : "Closed · ready";
+            CircuitStateText.Text = _isSimulationRunning
+                ? anyLedOn
+                    ? "Live · output high"
+                    : onlineSensors.Count > 0
+                        ? $"Live · {onlineSensors.Count} sensor{(onlineSensors.Count == 1 ? string.Empty : "s")} online"
+                        : "Live · output low"
+                : onlineSensors.Count > 0
+                    ? $"Ready · {onlineSensors.Count} sensor{(onlineSensors.Count == 1 ? string.Empty : "s")} online"
+                    : "Closed · ready";
             CircuitStateText.Foreground = Brush("#5BD39E");
         }
         else if (_visualConnections.Count == 0)
@@ -1165,7 +1202,135 @@ public partial class MainWindow : Window
             CircuitStateText.Text = "Incomplete loop";
             CircuitStateText.Foreground = Brush("#D2A25C");
         }
+        UpdateCircuitAssistant(circuitReady);
         return circuitReady;
+    }
+
+    private void UpdateCircuitAssistant(bool? knownCircuitReady = null)
+    {
+        var sensors = _addedComponents.Values.Where(component => component.Info.HasAdjustableValue).ToList();
+        var unpoweredSensors = sensors
+            .Where(sensor => !IsSensorPowered(sensor))
+            .Select(sensor => sensor.Info.Name)
+            .Distinct()
+            .ToList();
+        var unwiredSensors = sensors
+            .Where(sensor => IsSensorPowered(sensor) && !IsSensorSignalConnected(sensor))
+            .Select(sensor => sensor.Info.Name)
+            .Distinct()
+            .ToList();
+        var missingInputPins = _sketchInputPins
+            .Where(pin => !IsControllerInputConnected(pin))
+            .OrderBy(pin => pin)
+            .ToList();
+        var missingOutputPins = (_lastSketchAnalysis?.Outputs.Keys ?? Enumerable.Empty<int>())
+            .Where(pin => !IsControllerOutputConnected(pin))
+            .OrderBy(pin => pin)
+            .ToList();
+        var leds = _addedComponents.Values.Where(component => component.Info.Name == "LED").ToList();
+        var incompleteLedCount = leds.Count(led => !IsLedPathComplete(led));
+        var selectedSensorName = _selectedComponent is not null &&
+                                 _addedComponents.TryGetValue(_selectedComponent, out var selected) &&
+                                 selected.Info.HasAdjustableValue
+            ? selected.Info.Name
+            : sensors.FirstOrDefault()?.Info.Name;
+        var circuitReady = knownCircuitReady ??
+                           (sensors.Any(sensor => IsSensorPowered(sensor) && IsSensorSignalConnected(sensor)) ||
+                            leds.Any(IsLedPathComplete));
+
+        var report = CircuitAssistant.Analyze(new CircuitAssistantInput(
+            _addedComponents.Count,
+            _addedComponents.Values.Any(component => component.Model.Kind == NodeKind.Microcontroller),
+            leds.Count > 0,
+            circuitReady,
+            _hasShortCircuit,
+            incompleteLedCount,
+            unpoweredSensors,
+            unwiredSensors,
+            missingInputPins,
+            missingOutputPins,
+            _lastSketchAnalysis?.IsValid ?? false,
+            _lastSketchAnalysis?.Diagnostic ?? "No supported Arduino I/O",
+            selectedSensorName));
+        RenderCircuitAssistant(report);
+    }
+
+    private bool IsLedPathComplete(EditorComponent led)
+    {
+        var anode = led.Model.Pins.FirstOrDefault(pin => pin.Name == "Anode");
+        var cathode = led.Model.Pins.FirstOrDefault(pin => pin.Name == "Cathode");
+        if (anode is null || cathode is null || _hasShortCircuit)
+            return false;
+
+        var hasProtectedSource = GetDrivenPins().Any(source =>
+            HasPinPath(source.Pin, anode, PathLimiterRequirement.Required));
+        var hasGroundReturn = GetGroundReferencePins().Any(ground =>
+            HasPinPath(cathode, ground, PathLimiterRequirement.Any));
+        return hasProtectedSource && hasGroundReturn;
+    }
+
+    private bool IsControllerInputConnected(string pinName)
+    {
+        var inputs = _addedComponents.Values
+            .Where(component => component.Model.Kind == NodeKind.Microcontroller)
+            .SelectMany(component => component.Model.Pins)
+            .Where(pin => pin.Name.Equals(pinName, StringComparison.OrdinalIgnoreCase) &&
+                          pin.Direction is PinDirection.Input or PinDirection.Bidirectional)
+            .ToList();
+        return _addedComponents.Values
+            .Where(component => component.Info.HasAdjustableValue)
+            .SelectMany(component => component.Model.Pins)
+            .Where(pin => pin.Direction == PinDirection.Output)
+            .Any(output => inputs.Any(input => HasPinPath(output, input, PathLimiterRequirement.Any)));
+    }
+
+    private bool IsControllerOutputConnected(int pinNumber)
+    {
+        var pinName = $"D{pinNumber}";
+        var outputs = _addedComponents.Values
+            .Where(component => component.Model.Kind == NodeKind.Microcontroller)
+            .SelectMany(component => component.Model.Pins)
+            .Where(pin => pin.Name.Equals(pinName, StringComparison.OrdinalIgnoreCase) &&
+                          pin.Direction is PinDirection.Output or PinDirection.Bidirectional)
+            .ToList();
+        return outputs.Any(output => _visualConnections.Any(connection => connection.Model.IsConnectedTo(output)));
+    }
+
+    private void RenderCircuitAssistant(CircuitAssistantReport report)
+    {
+        AssistantStatusText.Text = report.Status;
+        AssistantSummaryText.Text = report.Summary;
+        var (foreground, background) = report.Status switch
+        {
+            "READY" => ("#6DE0B0", "#17382E"),
+            "UNSAFE" or "FIX" => ("#FF9AAE", "#3A1D29"),
+            "CHECK" => ("#F0C06A", "#3A2D19"),
+            _ => ("#7FB4E8", "#172C42")
+        };
+        AssistantStatusText.Foreground = Brush(foreground);
+        AssistantStatusBadge.Background = Brush(background);
+
+        if (report.Issues.Count == 0)
+        {
+            AssistantIssuesText.Text = "✓ No blocking circuit issues detected.";
+            AssistantIssuesText.Foreground = Brush("#7BCDAC");
+        }
+        else
+        {
+            const int visibleIssueLimit = 4;
+            var issueLines = report.Issues.Take(visibleIssueLimit)
+                .Select((issue, index) => $"{index + 1}. {issue.Title} — {issue.Instruction}")
+                .ToList();
+            if (report.Issues.Count > visibleIssueLimit)
+                issueLines.Add($"+ {report.Issues.Count - visibleIssueLimit} more issue(s)");
+            AssistantIssuesText.Text = string.Join(Environment.NewLine, issueLines);
+            AssistantIssuesText.Foreground = Brush(report.Issues.Any(issue => issue.Severity == GuidanceSeverity.Error)
+                ? "#E7A4B1"
+                : "#C8B889");
+        }
+
+        AssistantCodePanel.IsVisible = !string.IsNullOrWhiteSpace(report.CodeExample);
+        AssistantCodeText.Text = report.CodeExample ?? string.Empty;
     }
 
     private IEnumerable<DrivenPin> GetDrivenPins()
@@ -1173,7 +1338,8 @@ public partial class MainWindow : Window
         foreach (var component in _addedComponents.Values.Where(component =>
                      component.Model.Kind == NodeKind.Microcontroller))
         {
-            foreach (var pin in component.Model.Pins.Where(pin => pin.Direction == PinDirection.Output))
+            foreach (var pin in component.Model.Pins.Where(pin =>
+                         pin.Direction is PinDirection.Output or PinDirection.Bidirectional))
             {
                 if (pin.SignalType == PinSignalType.Power)
                 {
@@ -1187,15 +1353,41 @@ public partial class MainWindow : Window
             }
         }
 
+    }
+
+    private IEnumerable<EditorComponent> GetOnlineSensors()
+    {
         foreach (var sensor in _addedComponents.Values.Where(component => component.Info.HasAdjustableValue))
         {
-            if (!IsSensorPowered(sensor))
-                continue;
-
-            var isHigh = IsSensorOutputActive(sensor.Info, sensor.Model.ComponentValue);
-            foreach (var output in sensor.Model.Pins.Where(pin => pin.Direction == PinDirection.Output))
-                yield return new DrivenPin(output, isHigh);
+            UpdateSensorReading(sensor);
+            if (IsSensorPowered(sensor) && IsSensorSignalConnected(sensor))
+                yield return sensor;
         }
+    }
+
+    private bool IsSensorSignalConnected(EditorComponent sensor)
+    {
+        var controllerInputs = _addedComponents.Values
+            .Where(component => component.Model.Kind == NodeKind.Microcontroller)
+            .SelectMany(component => component.Model.Pins)
+            .Where(pin => pin.Direction is PinDirection.Input or PinDirection.Bidirectional)
+            .ToList();
+        var hasDataPath = sensor.Model.Pins
+            .Where(pin => pin.Direction == PinDirection.Output)
+            .Any(output => controllerInputs.Any(input => HasPinPath(output, input, PathLimiterRequirement.Any)));
+        if (!hasDataPath)
+            return false;
+
+        if (sensor.Info.Name != "HC-SR04 Distance")
+            return true;
+
+        var trigger = sensor.Model.Pins.FirstOrDefault(pin => pin.Name == "TRIG");
+        if (trigger is null)
+            return false;
+
+        return GetDrivenPins().Any(source =>
+            source.Pin.SignalType == PinSignalType.Digital &&
+            HasPinPath(source.Pin, trigger, PathLimiterRequirement.Any));
     }
 
     private bool IsSensorPowered(EditorComponent sensor)
@@ -1216,8 +1408,100 @@ public partial class MainWindow : Window
         return hasSupply && hasGround;
     }
 
+    private bool ApplyConditionalOutputs()
+    {
+        var changed = false;
+        foreach (var rule in _conditionalOutputRules)
+        {
+            var next = TryReadSensorInput(rule.Condition, out var inputValue)
+                ? rule.Evaluate(inputValue)
+                : rule.FalseState;
+            var previous = _digitalPinStates.GetValueOrDefault(rule.OutputPin);
+            if (previous == next)
+                continue;
+
+            _digitalPinStates[rule.OutputPin] = next;
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private bool TryReadSensorInput(ArduinoInputCondition condition, out double value)
+    {
+        var controllerPins = _addedComponents.Values
+            .Where(component => component.Model.Kind == NodeKind.Microcontroller)
+            .SelectMany(component => component.Model.Pins)
+            .Where(pin => pin.Name.Equals(condition.Pin, StringComparison.OrdinalIgnoreCase) &&
+                          pin.Direction is PinDirection.Input or PinDirection.Bidirectional)
+            .ToList();
+
+        foreach (var sensor in _addedComponents.Values.Where(component => component.Info.HasAdjustableValue))
+        {
+            if (!IsSensorPowered(sensor) || !SensorCanProvide(sensor.Info.Name, condition.Kind))
+                continue;
+
+            var hasDataPath = sensor.Model.Pins
+                .Where(pin => pin.Direction == PinDirection.Output)
+                .Any(output => controllerPins.Any(input => HasPinPath(output, input, PathLimiterRequirement.Any)));
+            if (!hasDataPath ||
+                (condition.Kind is ArduinoInputKind.PulseDurationMicroseconds or ArduinoInputKind.DistanceCentimeters &&
+                 !IsSensorSignalConnected(sensor)))
+                continue;
+
+            UpdateSensorReading(sensor);
+            value = condition.Kind switch
+            {
+                ArduinoInputKind.Analog when sensor.Info.Name == "LDR Sensor" =>
+                    SensorSimulation.ReadPhotoresistor(sensor.Model.ComponentValue).AdcValue,
+                ArduinoInputKind.Analog => SensorSimulation.ReadPotentiometer(sensor.Model.ComponentValue).AdcValue,
+                ArduinoInputKind.PulseDurationMicroseconds =>
+                    SensorSimulation.ReadHcSr04(sensor.Model.ComponentValue).EchoDurationMicroseconds,
+                ArduinoInputKind.DistanceCentimeters => sensor.Model.ComponentValue,
+                ArduinoInputKind.TemperatureCelsius =>
+                    SensorSimulation.ReadDht11(sensor.Model.ComponentValue).TemperatureCelsius,
+                ArduinoInputKind.RelativeHumidity =>
+                    SensorSimulation.ReadDht11(sensor.Model.ComponentValue).HumidityPercent,
+                ArduinoInputKind.Digital => sensor.Model.Pins
+                    .Where(pin => pin.Direction == PinDirection.Output)
+                    .Select(pin => pin.Value)
+                    .FirstOrDefault() > 0 ? 1 : 0,
+                _ => 0
+            };
+            return true;
+        }
+
+        value = 0;
+        return false;
+    }
+
+    private static bool SensorCanProvide(string sensorName, ArduinoInputKind inputKind) => inputKind switch
+    {
+        ArduinoInputKind.Analog => sensorName is "LDR Sensor" or "Potentiometer",
+        ArduinoInputKind.PulseDurationMicroseconds => sensorName == "HC-SR04 Distance",
+        ArduinoInputKind.DistanceCentimeters => sensorName == "HC-SR04 Distance",
+        ArduinoInputKind.TemperatureCelsius or ArduinoInputKind.RelativeHumidity => sensorName == "DHT11 Temperature",
+        ArduinoInputKind.Digital => sensorName is "HC-SR04 Distance" or "DHT11 Temperature",
+        _ => false
+    };
+
+    private string? BuildConditionalReactionSummary()
+    {
+        var reactions = new List<string>();
+        foreach (var rule in _conditionalOutputRules)
+        {
+            if (!TryReadSensorInput(rule.Condition, out var inputValue))
+                continue;
+
+            var state = rule.Evaluate(inputValue) ? "HIGH" : "LOW";
+            reactions.Add($"{rule.Condition.Pin} {inputValue:0.##} → D{rule.OutputPin} {state}");
+        }
+
+        return reactions.Count == 0 ? null : string.Join(" · ", reactions);
+    }
+
     private IEnumerable<NodePin> GetGroundReferencePins() => _addedComponents.Values
-        .Where(component => component.Info.Name == "GND")
+        .Where(component => component.Info.Name == "GND" || component.Model.Kind == NodeKind.Microcontroller)
         .SelectMany(component => component.Model.Pins)
         .Where(pin => pin.SignalType == PinSignalType.Ground);
 
@@ -1300,9 +1584,17 @@ public partial class MainWindow : Window
             return;
 
         component.Model.ComponentValue = e.NewValue;
+        UpdateSensorReading(component);
         UpdateSignalValueText(component.Info, e.NewValue);
-        ParametersText.Text = BuildParameterSummary(component.Info, e.NewValue);
-        HintText.Text = $"{component.Info.ValueLabel} updated. Simulated output is {(IsSensorOutputActive(component.Info, e.NewValue) ? "HIGH" : "LOW")}.";
+        ParametersText.Text = BuildComponentParameterSummary(component);
+        HintText.Text = BuildSensorChangeHint(component.Info, e.NewValue);
+        if (_isSimulationRunning)
+        {
+            ApplyConditionalOutputs();
+            var reaction = BuildConditionalReactionSummary();
+            if (!string.IsNullOrEmpty(reaction))
+                HintText.Text += $" · {reaction}";
+        }
         EvaluateCircuitState();
     }
 
@@ -1311,13 +1603,83 @@ public partial class MainWindow : Window
         SignalValueText.Text = $"{value:0.#}{info.ValueUnit}";
     }
 
-    private static bool IsSensorOutputActive(ComponentInfo info, double value) =>
-        info.TriggerAbove ? value >= info.TriggerThreshold : value <= info.TriggerThreshold;
-
     private static string BuildParameterSummary(ComponentInfo info, double value) =>
-        info.HasAdjustableValue
-            ? $"{info.Parameters}\nSimulated output: {(IsSensorOutputActive(info, value) ? "HIGH" : "LOW")} at {info.TriggerThreshold:0.#}{info.ValueUnit}"
-            : info.Parameters;
+        info.Name switch
+        {
+            "LDR Sensor" => BuildPhotoresistorSummary(info, value),
+            "Potentiometer" => BuildPotentiometerSummary(info, value),
+            "HC-SR04 Distance" => BuildUltrasonicSummary(info, value),
+            "DHT11 Temperature" => BuildDht11Summary(info, value),
+            _ => info.Parameters
+        };
+
+    private string BuildComponentParameterSummary(EditorComponent component)
+    {
+        var summary = BuildParameterSummary(component.Info, component.Model.ComponentValue);
+        if (!component.Info.HasAdjustableValue)
+            return summary;
+
+        var circuitState = !IsSensorPowered(component)
+            ? "connect VCC and GND"
+            : !IsSensorSignalConnected(component)
+                ? component.Info.Name == "HC-SR04 Distance"
+                    ? "wire TRIG and ECHO to the controller"
+                    : "wire the signal to a matching controller input"
+                : "powered · signal online";
+        return $"{summary}\nCircuit: {circuitState}";
+    }
+
+    private static string BuildPhotoresistorSummary(ComponentInfo info, double value)
+    {
+        var reading = SensorSimulation.ReadPhotoresistor(value);
+        return $"{info.Parameters}\nDivider output {reading.Voltage:0.00} V · ADC {reading.AdcValue}/{reading.AdcMaximum}\nLDR ≈ {reading.SourceResistanceOhms / 1_000:0.#} kΩ";
+    }
+
+    private static string BuildPotentiometerSummary(ComponentInfo info, double value)
+    {
+        var reading = SensorSimulation.ReadPotentiometer(value);
+        return $"{info.Parameters}\nWiper output {reading.Voltage:0.00} V · ADC {reading.AdcValue}/{reading.AdcMaximum}";
+    }
+
+    private static string BuildUltrasonicSummary(ComponentInfo info, double value)
+    {
+        var reading = SensorSimulation.ReadHcSr04(value);
+        return $"{info.Parameters}\nEcho pulse {reading.EchoDurationMicroseconds:0} µs at 20 °C\nRound trip · {reading.SpeedOfSoundMetersPerSecond:0.0} m/s";
+    }
+
+    private static string BuildDht11Summary(ComponentInfo info, double value)
+    {
+        var reading = SensorSimulation.ReadDht11(value);
+        return $"{info.Parameters}\nReported {reading.TemperatureCelsius:0} °C · ±{reading.TemperatureAccuracyCelsius:0} °C\nDigital refresh ≥ {reading.MinimumSampleIntervalSeconds:0} s";
+    }
+
+    private static string BuildSensorChangeHint(ComponentInfo info, double value) => info.Name switch
+    {
+        "LDR Sensor" => $"Light updated. Analog input is {SensorSimulation.ReadPhotoresistor(value).AdcValue}/1023.",
+        "Potentiometer" => $"Wiper updated. Analog input is {SensorSimulation.ReadPotentiometer(value).Voltage:0.00} V.",
+        "HC-SR04 Distance" => $"Target updated. Echo pulse is {SensorSimulation.ReadHcSr04(value).EchoDurationMicroseconds:0} µs.",
+        "DHT11 Temperature" => $"Temperature updated. DHT11 reports {SensorSimulation.ReadDht11(value).TemperatureCelsius:0} °C at its next sample.",
+        _ => $"{info.ValueLabel} updated to {value:0.#}{info.ValueUnit}."
+    };
+
+    private static void UpdateSensorReading(EditorComponent component)
+    {
+        switch (component.Info.Name)
+        {
+            case "LDR Sensor":
+                component.Model.SetPinSignalValue("OUT", SensorSimulation.ReadPhotoresistor(component.Model.ComponentValue).Voltage);
+                break;
+            case "Potentiometer":
+                component.Model.SetPinSignalValue("WIPER", SensorSimulation.ReadPotentiometer(component.Model.ComponentValue).Voltage);
+                break;
+            case "HC-SR04 Distance":
+                component.Model.SetPinSignalValue("ECHO", SensorSimulation.ReadHcSr04(component.Model.ComponentValue).EchoDurationMicroseconds);
+                break;
+            case "DHT11 Temperature":
+                component.Model.SetPinSignalValue("DATA", SensorSimulation.ReadDht11(component.Model.ComponentValue).TemperatureCelsius);
+                break;
+        }
+    }
 
     private static void UpdateSwitchVisual(EditorComponent component)
     {
@@ -1388,7 +1750,10 @@ public partial class MainWindow : Window
             "LDR Sensor" or "Potentiometer" or "HC-SR04 Distance" or "DHT11 Temperature" => NodeKind.Sensor,
             _ => NodeKind.Electronic
         };
-        var node = new EditorNode(componentName, kind);
+        var node = new EditorNode(componentName, kind)
+        {
+            ComponentValue = GetComponentInfo(componentName).DefaultValue
+        };
 
         switch (componentName)
         {
@@ -1399,6 +1764,8 @@ public partial class MainWindow : Window
             case "STM32 Blue Pill":
             case "ATtiny85":
                 node.AddTerminal("D2", PinDirection.Input, PinSignalType.Digital);
+                node.AddTerminal("A0", PinDirection.Input, PinSignalType.Analog);
+                node.AddTerminal("D7", PinDirection.Bidirectional, PinSignalType.Digital);
                 node.AddTerminal("D13", PinDirection.Output, PinSignalType.Digital);
                 node.AddTerminal("5V", PinDirection.Output, PinSignalType.Power);
                 node.AddTerminal("GND", PinDirection.Passive, PinSignalType.Ground);
@@ -1449,22 +1816,35 @@ public partial class MainWindow : Window
     {
         const double deltaSeconds = 0.05;
         _timeSeconds += deltaSeconds;
-        _blinkAccumulatorSeconds += deltaSeconds;
         TimeText.Text = $"{_timeSeconds:0.000} s";
         var simulationContext = new SimulationContext(_timeSeconds);
         foreach (var component in _addedComponents.Values)
             component.Model.Step(simulationContext, deltaSeconds);
 
         var changed = false;
-        foreach (var (pinNumber, mode) in _sketchPinModes)
+        foreach (var (pinNumber, profile) in _sketchOutputProfiles)
         {
             var previous = _digitalPinStates.GetValueOrDefault(pinNumber);
-            var next = mode switch
+            var next = profile.Mode switch
             {
                 DigitalOutputMode.High => true,
                 DigitalOutputMode.Low => false,
                 _ => previous
             };
+
+            if (profile.Mode == DigitalOutputMode.Blink)
+            {
+                var elapsed = _pinPhaseElapsedSeconds.GetValueOrDefault(pinNumber) + deltaSeconds;
+                var phaseDuration = previous ? profile.HighDurationSeconds : profile.LowDurationSeconds;
+                while (elapsed >= phaseDuration)
+                {
+                    elapsed -= phaseDuration;
+                    next = !next;
+                    phaseDuration = next ? profile.HighDurationSeconds : profile.LowDurationSeconds;
+                }
+                _pinPhaseElapsedSeconds[pinNumber] = elapsed;
+            }
+
             if (previous != next)
             {
                 _digitalPinStates[pinNumber] = next;
@@ -1472,18 +1852,8 @@ public partial class MainWindow : Window
             }
         }
 
-        if (_blinkAccumulatorSeconds >= _blinkPeriodSeconds)
-        {
-            _blinkAccumulatorSeconds %= _blinkPeriodSeconds;
-            foreach (var pinNumber in _sketchPinModes
-                         .Where(pair => pair.Value == DigitalOutputMode.Blink)
-                         .Select(pair => pair.Key)
-                         .ToList())
-            {
-                _digitalPinStates[pinNumber] = !_digitalPinStates.GetValueOrDefault(pinNumber);
-                changed = true;
-            }
-        }
+        if (ApplyConditionalOutputs())
+            changed = true;
 
         if (changed)
             EvaluateCircuitState();
@@ -1500,19 +1870,26 @@ public partial class MainWindow : Window
         CodeEditorTextBox.Height = editorHeight;
 
         var analysis = ArduinoSketchProgram.Analyze(code);
-        _blinkPeriodSeconds = analysis.IntervalSeconds;
-        _sketchPinModes.Clear();
+        _lastSketchAnalysis = analysis;
+        _sketchOutputProfiles.Clear();
+        _conditionalOutputRules.Clear();
+        _pinPhaseElapsedSeconds.Clear();
         _digitalPinStates.Clear();
-        foreach (var (pinNumber, mode) in analysis.Outputs)
+        _sketchInputPins.Clear();
+        foreach (var (pinNumber, profile) in analysis.OutputProfiles)
         {
-            _sketchPinModes[pinNumber] = mode;
-            _digitalPinStates[pinNumber] = mode == DigitalOutputMode.High;
+            _sketchOutputProfiles[pinNumber] = profile;
+            _pinPhaseElapsedSeconds[pinNumber] = 0;
+            _digitalPinStates[pinNumber] = profile.InitialState;
         }
+        foreach (var pin in analysis.InputPins)
+            _sketchInputPins.Add(pin);
+        _conditionalOutputRules.AddRange(analysis.ConditionalOutputs);
 
         if (analysis.IsValid)
         {
             CodeStatusDot.Fill = Brush("#46D39A");
-            CodeStatusText.Text = "Sketch ready";
+            CodeStatusText.Text = analysis.Diagnostic;
             CodeStatusText.Foreground = Brush("#7DDBB8");
         }
         else
@@ -1521,14 +1898,55 @@ public partial class MainWindow : Window
             CodeStatusText.Text = analysis.Diagnostic;
             CodeStatusText.Foreground = Brush("#FF9AAE");
         }
+        UpdateCircuitAssistant();
         return analysis.IsValid;
+    }
+
+    private string BuildSimulationHint()
+    {
+        var activities = new List<string>();
+        var staticPins = _sketchOutputProfiles
+            .Where(pair => pair.Value.Mode is DigitalOutputMode.High or DigitalOutputMode.Low)
+            .Select(pair => $"D{pair.Key} {(pair.Value.Mode == DigitalOutputMode.High ? "HIGH" : "LOW")}");
+        activities.AddRange(staticPins);
+        activities.AddRange(_sketchOutputProfiles
+            .Where(pair => pair.Value.Mode == DigitalOutputMode.Blink)
+            .Select(pair => $"D{pair.Key} {pair.Value.HighDurationSeconds:0.##}s HIGH / {pair.Value.LowDurationSeconds:0.##}s LOW"));
+        activities.AddRange(_conditionalOutputRules.Select(rule =>
+            $"D{rule.OutputPin} follows {rule.Condition.ToDisplayString()}"));
+        if (_sketchInputPins.Count > 0)
+            activities.Add($"reading {string.Join(", ", _sketchInputPins.OrderBy(pin => pin))}");
+
+        return activities.Count == 0
+            ? "Simulation is live."
+            : $"Sketch live · {string.Join(" · ", activities)}";
     }
 
     private void CodeEditorTextBox_TextChanged(object? sender, TextChangedEventArgs e)
     {
-        AnalyzeSketch();
-        if (_isSimulationRunning)
+        var isValid = AnalyzeSketch();
+        if (!_isSimulationRunning)
+            return;
+
+        if (isValid)
+        {
             EvaluateCircuitState();
+            return;
+        }
+
+        _simulationTimer.Stop();
+        _isSimulationRunning = false;
+        RunButton.IsEnabled = true;
+        StopButton.IsEnabled = false;
+        SimulationPulse.Fill = Brush("#FF607D");
+        SimulationStateText.Text = "CODE ERROR";
+        SimulationStateText.Foreground = Brush("#FF8EA4");
+        ArduinoStatus.Text = "Sketch paused";
+        ArduinoStatus.Foreground = Brush("#FF9AAE");
+        StatusText.Text = "Code issue";
+        HintText.Text = "Simulation paused because the edited sketch is no longer valid.";
+        FooterText.Text = "SimForge 0.7.0 · Fix sketch diagnostics to continue";
+        EvaluateCircuitState();
     }
 
     private void StarterCircuitButton_Click(object? sender, RoutedEventArgs e)
@@ -1573,7 +1991,7 @@ public partial class MainWindow : Window
         UpdateWorkspaceUi();
         HintText.Text = "Starter circuit ready. Press Run to simulate the blinking LED on pin D13.";
         TutorialText.Text = "The resistor limits LED current and the ground node completes the return path.";
-        FooterText.Text = "SimForge 0.4.0 · Starter circuit loaded";
+        FooterText.Text = "SimForge 0.7.0 · Starter circuit loaded";
         StatusText.Text = "Demo ready";
     }
 
@@ -1615,7 +2033,7 @@ public partial class MainWindow : Window
         HintText.Text = action == WorkspaceReplacementAction.Clear
             ? "This removes every component and wire. Click Confirm clear within four seconds to continue."
             : "Loading the demo replaces the current workspace. Click Confirm load within four seconds to continue.";
-        FooterText.Text = "SimForge 0.4.0 · Waiting for confirmation";
+        FooterText.Text = "SimForge 0.7.0 · Waiting for confirmation";
         return false;
     }
 
@@ -1637,7 +2055,7 @@ public partial class MainWindow : Window
         {
             StatusText.Text = _isSimulationRunning ? "Running" : "Ready";
             HintText.Text = "Confirmation expired. Your workspace was left unchanged.";
-            FooterText.Text = "SimForge 0.4.0 · Workspace unchanged";
+            FooterText.Text = "SimForge 0.7.0 · Workspace unchanged";
         }
     }
 
@@ -1665,7 +2083,7 @@ public partial class MainWindow : Window
         if (announce)
         {
             HintText.Text = "Workspace cleared. Add a component or load the starter circuit.";
-            FooterText.Text = "SimForge 0.4.0 · New empty circuit";
+            FooterText.Text = "SimForge 0.7.0 · New empty circuit";
         }
     }
 
@@ -1678,7 +2096,7 @@ public partial class MainWindow : Window
         ClearSelection();
         ShowWorkspaceInspector();
         CursorPositionText.Text = $"X {point.X:0}  ·  Y {point.Y:0}";
-        FooterText.Text = "SimForge 0.4.0 · Workspace selected";
+        FooterText.Text = "SimForge 0.7.0 · Workspace selected";
         StatusText.Text = _isSimulationRunning ? "Running" : "Ready";
     }
 
@@ -1741,12 +2159,12 @@ public partial class MainWindow : Window
 
     private static readonly IReadOnlyList<ComponentInfo> ComponentCatalog =
     [
-        new("Arduino Uno", "Microcontrollers", "UNO", "MCU", "ATmega328P development board with a familiar 5 V I/O platform.", "ATmega328P · 5 V", "D2, D13, 5V, GND", "Clock 16 MHz · Logic 5 V", "#78ACFF", "#162F50", "Use D13 as an output, D2 as an input, and connect the board to a complete circuit.", "DIGITAL"),
-        new("Arduino Nano", "Microcontrollers", "NANO", "MCU", "Compact ATmega328P board designed for breadboard projects.", "Compact AVR · 5 V", "D2, D13, 5V, GND", "Clock 16 MHz · Logic 5 V", "#78ACFF", "#162F50", "The Nano behaves like a compact Uno for this simulation.", "DIGITAL"),
-        new("ESP32 DevKit", "Microcontrollers", "ESP32", "MCU", "Dual-core wireless microcontroller with Wi-Fi and Bluetooth.", "Wi-Fi · Bluetooth · 3.3 V", "D2, D13, 5V, GND", "Clock 240 MHz · Logic 3.3 V", "#B09AFF", "#282047", "Respect 3.3 V logic levels when pairing the ESP32 with external devices.", "DIGITAL"),
-        new("Raspberry Pi Pico", "Microcontrollers", "PICO", "MCU", "RP2040 microcontroller board with two ARM Cortex-M0+ cores.", "RP2040 · dual core", "D2, D13, 5V, GND", "Clock 133 MHz · Logic 3.3 V", "#62D5C1", "#153A36", "Use the Pico for compact embedded control and sensor projects.", "DIGITAL"),
-        new("STM32 Blue Pill", "Microcontrollers", "STM", "MCU", "STM32F103 board for fast 32-bit embedded control.", "Cortex-M3 · 72 MHz", "D2, D13, 5V, GND", "Clock 72 MHz · Logic 3.3 V", "#68C7FF", "#163448", "Verify signal voltage compatibility before wiring 5 V modules.", "DIGITAL"),
-        new("ATtiny85", "Microcontrollers", "85", "MCU", "Minimal 8-bit AVR microcontroller for compact projects.", "Minimal 8-bit AVR", "D2, D13, 5V, GND", "Clock 8 MHz · Logic 5 V", "#F3CE84", "#382F1F", "The ATtiny85 is ideal when only a few I/O pins are required.", "DIGITAL"),
+        new("Arduino Uno", "Microcontrollers", "UNO", "MCU", "ATmega328P development board with a familiar 5 V I/O platform.", "ATmega328P · 5 V", "D2, A0, D7, D13, 5V, GND", "Clock 16 MHz · Logic 5 V", "#78ACFF", "#162F50", "Use D13 as an output, D2/D7 for digital sensors, and A0 for analog sensors.", "DIGITAL"),
+        new("Arduino Nano", "Microcontrollers", "NANO", "MCU", "Compact ATmega328P board designed for breadboard projects.", "Compact AVR · 5 V", "D2, A0, D7, D13, 5V, GND", "Clock 16 MHz · Logic 5 V", "#78ACFF", "#162F50", "The Nano exposes digital and analog input paths in this simulation.", "DIGITAL"),
+        new("ESP32 DevKit", "Microcontrollers", "ESP32", "MCU", "Dual-core wireless microcontroller with Wi-Fi and Bluetooth.", "Wi-Fi · Bluetooth · 3.3 V", "D2, A0, D7, D13, 5V, GND", "Clock 240 MHz · Logic 3.3 V", "#B09AFF", "#282047", "Respect 3.3 V logic levels when pairing the ESP32 with external devices.", "DIGITAL"),
+        new("Raspberry Pi Pico", "Microcontrollers", "PICO", "MCU", "RP2040 microcontroller board with two ARM Cortex-M0+ cores.", "RP2040 · dual core", "D2, A0, D7, D13, 5V, GND", "Clock 133 MHz · Logic 3.3 V", "#62D5C1", "#153A36", "Use A0 for analog sensors and D2/D7 for digital sensor data.", "DIGITAL"),
+        new("STM32 Blue Pill", "Microcontrollers", "STM", "MCU", "STM32F103 board for fast 32-bit embedded control.", "Cortex-M3 · 72 MHz", "D2, A0, D7, D13, 5V, GND", "Clock 72 MHz · Logic 3.3 V", "#68C7FF", "#163448", "Verify signal voltage compatibility before wiring 5 V modules.", "DIGITAL"),
+        new("ATtiny85", "Microcontrollers", "85", "MCU", "Minimal 8-bit AVR microcontroller for compact projects.", "Minimal 8-bit AVR", "D2, A0, D7, D13, 5V, GND", "Clock 8 MHz · Logic 5 V", "#F3CE84", "#382F1F", "Use the exposed digital and analog paths for compact sensor projects.", "DIGITAL"),
         new("LED", "Basic Electronics", "LED", "OUTPUT", "Light-emitting diode that converts electrical energy into visible light.", "Light-emitting diode", "Anode, Cathode", "Forward voltage 2.0 V · Current 20 mA", "#FF718B", "#3D1E28", "Always place a current-limiting resistor in series with an LED.", "POLARIZED"),
         new("Resistor", "Basic Electronics", "Ω", "PASSIVE", "Passive element that limits current and divides voltage.", "220 Ω · current limiter", "A, B", "Resistance 220 Ω · Power 0.25 W", "#F1C975", "#382F1F", "Use a resistor to protect LEDs and shape analog signals.", "ANALOG"),
         new("Capacitor", "Basic Electronics", "C", "PASSIVE", "Passive component that stores electrical charge.", "10 µF · charge storage", "A, B", "Capacitance 10 µF · Rating 16 V", "#75A9FF", "#1A304D", "Capacitors can smooth supply noise and create timing networks.", "ANALOG"),
@@ -1754,10 +2172,10 @@ public partial class MainWindow : Window
         new("Button", "Switches", "PB", "SWITCH", "Momentary switch that closes a digital path when activated.", "Momentary contact", "IN, OUT", "State open", "#C1CEDC", "#29303A", "Click the control on the node to change its simulated contact state.", "DIGITAL"),
         new("Toggle Switch", "Switches", "TGL", "SWITCH", "Mechanical switch that maintains its open or closed state.", "Latching on / off", "IN, OUT", "State open", "#F2A65A", "#3A291E", "A closed switch conducts; an open switch breaks the simulated path.", "DIGITAL"),
         new("Slide Switch", "Switches", "S1", "SWITCH", "Two-position selector for routing a digital signal.", "Two-position selector", "IN, OUT", "Position open", "#F2D866", "#38331C", "Use slide switches to model persistent user input.", "DIGITAL"),
-        new("LDR Sensor", "Sensors & Inputs", "LUX", "SENSOR", "Photoresistor input whose output follows ambient light.", "Ambient light input", "VCC, OUT, GND", "Light level 0–100%", "#FFBE5C", "#3B2D1A", "Adjust the light value to test threshold-driven logic.", "ANALOG", true, "Light level", 0, 100, "%", 50, true),
-        new("Potentiometer", "Sensors & Inputs", "POT", "INPUT", "Variable resistor used as an adjustable analog voltage divider.", "Variable analog input", "VCC, WIPER, GND", "Position 0–100%", "#69C1FF", "#18334A", "Move the slider to simulate the wiper position.", "ANALOG", true, "Wiper position", 0, 100, "%", 50, true),
-        new("HC-SR04 Distance", "Sensors & Inputs", "CM", "SENSOR", "Ultrasonic ranging module for measuring nearby distance.", "Ultrasonic · 2–400 cm", "VCC, TRIG, ECHO, GND", "Range 2–400 cm · Frequency 40 kHz", "#5CE0C7", "#173936", "Adjust the target distance and observe your program response.", "DIGITAL", true, "Target distance", 2, 400, " cm", 100, false),
-        new("DHT11 Temperature", "Sensors & Inputs", "°C", "SENSOR", "Digital environmental sensor for temperature and humidity.", "Temperature · humidity", "VCC, DATA, GND", "Range 0–50 °C · 20–90% RH", "#FF7D7D", "#3D2022", "Adjust the temperature to exercise environmental control logic.", "DIGITAL", true, "Temperature", 0, 50, " °C", 30, true)
+        new("LDR Sensor", "Sensors & Inputs", "LUX", "SENSOR", "Non-linear photoresistor voltage divider whose output follows ambient light.", "10 kΩ divider · analog ADC", "VCC, OUT, GND", "LDR 1 kΩ–1 MΩ · 10-bit ADC", "#FFBE5C", "#3B2D1A", "Wire OUT to A0; use if (analogRead(A0) > 600) to drive an output.", "ANALOG", true, "Light level", 0, 100, "%", 50),
+        new("Potentiometer", "Sensors & Inputs", "POT", "INPUT", "10 kΩ voltage divider with a linear adjustable wiper output.", "0–5 V analog wiper", "VCC, WIPER, GND", "Position 0–100% · 10-bit ADC", "#69C1FF", "#18334A", "Wire WIPER to A0; compare analogRead(A0) in a simple if/else.", "ANALOG", true, "Wiper position", 0, 100, "%", 50),
+        new("HC-SR04 Distance", "Sensors & Inputs", "CM", "SENSOR", "Ultrasonic time-of-flight module with temperature-adjusted echo timing.", "40 kHz · 2–400 cm", "VCC, TRIG, ECHO, GND", "10 µs trigger · timed echo pulse", "#5CE0C7", "#173936", "Drive TRIG from D7, connect ECHO to D2, then read pulseIn(D2, HIGH).", "DIGITAL", true, "Target distance", 2, 400, " cm", 100),
+        new("DHT11 Temperature", "Sensors & Inputs", "°C", "SENSOR", "Quantized digital temperature and humidity sensor with a limited refresh rate.", "1 °C resolution · 2 s refresh", "VCC, DATA, GND", "0–50 °C · ±2 °C", "#FF7D7D", "#3D2022", "Connect DATA to D2; compare dht.readTemperature() in a simple if/else.", "DIGITAL", true, "Temperature", 0, 50, " °C", 24)
     ];
 
     private sealed record ComponentInfo(
@@ -1778,8 +2196,7 @@ public partial class MainWindow : Window
         double ValueMin = 0,
         double ValueMax = 100,
         string ValueUnit = "",
-        double TriggerThreshold = 50,
-        bool TriggerAbove = true);
+        double DefaultValue = 50);
 
     private sealed class EditorComponent
     {

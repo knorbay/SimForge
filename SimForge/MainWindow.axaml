@@ -447,6 +447,36 @@
                                     </Grid>
                                 </StackPanel>
                             </Border>
+                            <Border Classes="card" Background="#111F2A" BorderBrush="#2A4658">
+                                <StackPanel Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="7">
+                                            <Border Width="20" Height="20" CornerRadius="6" Background="#153D34">
+                                                <TextBlock Text="A" FontSize="9" FontWeight="Bold" Foreground="#66D8AD"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Text="CIRCUIT ASSISTANT" FontSize="9" FontWeight="Bold"
+                                                       Foreground="#84BFAE" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <Border Name="AssistantStatusBadge" Grid.Column="1" Background="#17382E" CornerRadius="5" Padding="6,2">
+                                            <TextBlock Name="AssistantStatusText" Text="START" FontSize="8"
+                                                       FontWeight="Bold" Foreground="#6DE0B0" />
+                                        </Border>
+                                    </Grid>
+                                    <TextBlock Name="AssistantSummaryText" Text="Add a controller to begin."
+                                               TextWrapping="Wrap" FontSize="10" LineHeight="15" Foreground="#C4D6D0" />
+                                    <TextBlock Name="AssistantIssuesText" Text="1. Add an Arduino from the component library."
+                                               TextWrapping="Wrap" FontSize="9" LineHeight="14" Foreground="#91AAAD" />
+                                    <Border Name="AssistantCodePanel" IsVisible="False" Background="#091219"
+                                            BorderBrush="#243D49" BorderThickness="1" CornerRadius="7" Padding="9,7">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="BEGINNER EXAMPLE" FontSize="8" FontWeight="Bold" Foreground="#668C9B" />
+                                            <TextBlock Name="AssistantCodeText" FontFamily="Menlo,Consolas,Monospace"
+                                                       TextWrapping="Wrap" FontSize="8" LineHeight="12" Foreground="#85D4AA" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
                             <Border Classes="card" Background="#101C28" BorderBrush="#263A50">
                                 <StackPanel Spacing="6">
                                     <StackPanel Orientation="Horizontal" Spacing="7">
@@ -478,7 +508,7 @@
                            VerticalAlignment="Center" Margin="17,0,0,0" />
                 <TextBlock Grid.Column="2" Name="CursorPositionText" Text="X 0  ·  Y 0" FontSize="9" Foreground="#7D92AA"
                            FontFamily="Menlo,Consolas,Monospace" VerticalAlignment="Center" Margin="17,0,0,0" />
-                <TextBlock Grid.Column="3" Name="FooterText" Text="SimForge 0.4.0 · Ready to design" FontSize="9"
+                <TextBlock Grid.Column="3" Name="FooterText" Text="SimForge 0.7.0 · Ready to design" FontSize="9"
                            Foreground="#71869D" VerticalAlignment="Center" HorizontalAlignment="Center" />
                 <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Spacing="13">
                     <TextBlock Text="SPACE  Run / pause" FontSize="9" Foreground="#71869D" />

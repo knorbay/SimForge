@@ -35,6 +35,20 @@ public sealed class GraphTests
     }
 
     [Fact]
+    public void Connect_AllowsAnalogSensorOutputToControllerAnalogInput()
+    {
+        var graph = new Graph();
+        var controller = new MicrocontrollerNode("Controller");
+        var sensor = new SensorNode("Sensor");
+        graph.AddNode(controller);
+        graph.AddNode(sensor);
+
+        graph.Connect(sensor.GetPin("OUT"), controller.GetPin("A0"));
+
+        Assert.Single(graph.Connections);
+    }
+
+    [Fact]
     public void Connect_AllowsDigitalOutputToDigitalInput()
     {
         var graph = new Graph();

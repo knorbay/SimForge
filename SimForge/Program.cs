@@ -38,9 +38,6 @@ class Program
             {
                 RenderingMode = [AvaloniaNativeRenderingMode.Software]
             })
-#if DEBUG
-            .WithDeveloperTools()
-#endif
             .WithInterFont()
             .LogToTrace();
 }

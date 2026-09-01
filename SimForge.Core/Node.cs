@@ -30,6 +30,14 @@ public abstract class Node
         _pins.FirstOrDefault(pin => string.Equals(pin.Name, name, StringComparison.Ordinal))
         ?? throw new KeyNotFoundException($"Pin '{name}' was not found on node '{Name}'.");
 
+    public void SetPinSignalValue(string pinName, double value)
+    {
+        if (!double.IsFinite(value))
+            throw new ArgumentOutOfRangeException(nameof(value), "A pin signal value must be finite.");
+
+        GetPin(pinName).Value = value;
+    }
+
     public bool TryGetParameter(string name, out double value) =>
         _parameters.TryGetValue(name, out value);
 
@@ -79,6 +87,8 @@ public class MicrocontrollerNode : Node
     public MicrocontrollerNode(string name) : base(name, NodeKind.Microcontroller)
     {
         AddTerminal("D2", PinDirection.Input, PinSignalType.Digital);
+        AddTerminal("A0", PinDirection.Input, PinSignalType.Analog);
+        AddTerminal("D7", PinDirection.Bidirectional, PinSignalType.Digital);
         AddTerminal("D13", PinDirection.Output, PinSignalType.Digital);
         AddTerminal("5V", PinDirection.Output, PinSignalType.Power);
         AddTerminal("GND", PinDirection.Passive, PinSignalType.Ground);
