@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
-version="${1:-0.4.0}"
+version="${1:-0.7.0}"
 output_dir="${2:-$repo_dir/artifacts}"
 package_name="SimForge-${version}-macOS-arm64"
 publish_dir="$(mktemp -d "${TMPDIR:-/tmp}/simforge-publish.XXXXXX")"
